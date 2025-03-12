@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -35,6 +36,16 @@ class ParticleView @JvmOverloads constructor(
         generateParticles(droneCount)
     }
 
+    private var mediaPlayer: MediaPlayer
+
+    init {
+        mediaPlayer = MediaPlayer.create(context, R.raw.gimn)
+        mediaPlayer.start()
+        mediaPlayer.setOnCompletionListener {
+            mediaPlayer.start()
+        }
+    }
+
     private fun generateParticles(count: Int) {
         particles.clear()
         repeat(count) {
@@ -46,7 +57,7 @@ class ParticleView @JvmOverloads constructor(
             particles.add(
                 Particle(
                     x, y, speedX, speedY,
-                    radius, Color.BLUE, bullets = 2000
+                    radius, Color.BLUE, bullets = 200
                 )
             )
         }
@@ -54,7 +65,7 @@ class ParticleView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(Color.BLACK)
+        //canvas.drawColor(Color.BLACK)
 
         // Отрисовка дронов
         particles.filter { it.isActive }.forEach { drone ->
