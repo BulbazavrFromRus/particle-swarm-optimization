@@ -1,11 +1,10 @@
 package com.example.diplomawork2
-import Particle
+
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.random.Random
@@ -16,28 +15,40 @@ class ParticleView @JvmOverloads constructor(
 
     private val particles = mutableListOf<Particle>()
     private val targets = mutableListOf<Target>()
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.RED }
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
 
+    // Настройки
     private val cohesionWeight = 0.005f
     private val separationWeight = 0.1f
     private val alignmentWeight = 0.05f
     private val minDistance = 50f
     private val maxSpeed = 5f
+    private val droneCount = 10  // Количество дронов
 
     init {
-        generateParticles(100)
+        setWillNotDraw(false)
+        generateParticles(droneCount)
     }
 
     private fun generateParticles(count: Int) {
-        for (i in 0 until count) {
+        particles.clear()
+        repeat(count) {
             val x = Random.nextFloat() * width
             val y = Random.nextFloat() * height
-            val radius = Random.nextFloat() * 10 + 5
+            val radius = 15f  // Фиксированный размер дрона
             val speedX = Random.nextFloat() * 4 - 2
             val speedY = Random.nextFloat() * 4 - 2
-            val color = Color.rgb(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256))
-            particles.add(Particle(x, y, speedX, speedY, radius, color))
+            particles.add(
+                Particle(
+                    x, y, speedX, speedY,
+                    radius, Color.BLUE, bullets = 2000
+                )
+            )
         }
     }
 
@@ -45,15 +56,31 @@ class ParticleView @JvmOverloads constructor(
         super.onDraw(canvas)
         canvas.drawColor(Color.BLACK)
 
-        // Отрисовка частиц
-        for (particle in particles) {
-            paint.color = particle.color
-            canvas.drawCircle(particle.position.x, particle.position.y, particle.radius, paint)
+        // Отрисовка дронов
+        particles.filter { it.isActive }.forEach { drone ->
+            paint.color = drone.color
+            canvas.drawCircle(drone.position.x, drone.position.y, drone.radius, paint)
+
+            // Индикатор патронов
+            paint.color = Color.WHITE
+            canvas.drawRect(
+                drone.position.x - 15f,
+                drone.position.y + 20f,
+                drone.position.x + 15f * (drone.bullets.toFloat() / 20),
+                drone.position.y + 23f,
+                paint
+            )
         }
 
         // Отрисовка целей
-        for (target in targets) {
-            canvas.drawCircle(target.x, target.y, 50f, targetPaint) // Радиус 15
+        targets.filter { it.health > 0 }.forEach { target ->
+            targetPaint.color = Color.argb(
+                255,
+                255,
+                (255 * (target.health.toFloat() / 100)).toInt(),
+                0
+            )
+            canvas.drawCircle(target.x, target.y, 30f, targetPaint)
         }
 
         updateParticles()
@@ -61,17 +88,27 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun updateParticles() {
-        for (particle in particles) {
-            particle.update(particles, width.toFloat(), height.toFloat(), cohesionWeight, separationWeight, alignmentWeight, minDistance, maxSpeed)
+        particles.forEach { drone ->
+            drone.update(
+                particles = particles,
+                targets = targets.filter { it.health > 0 },
+                screenWidth = width.toFloat(),
+                screenHeight = height.toFloat(),
+                cohesionW = cohesionWeight,
+                separationW = separationWeight,
+                alignmentW = alignmentWeight,
+                minDist = minDistance,
+                maxSpeed = maxSpeed
+            )
         }
+        targets.removeAll { it.health <= 0 }
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         event?.let {
             if (it.action == MotionEvent.ACTION_DOWN) {
-
-                targets.add(Target(it.x, it.y)) // Добавляем цель
-                    //invalidate() // Перерисовываем экран
+                targets.add(Target(it.x, it.y))
+                invalidate()
             }
         }
         return true
@@ -79,10 +116,14 @@ class ParticleView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        particles.clear()
-        generateParticles(100)
+        if (w > 0 && h > 0) {
+            generateParticles(droneCount)
+        }
     }
 }
 
-// Определение класса цели
-data class Target(val x: Float, val y: Float)
+data class Target(
+    val x: Float,
+    val y: Float,
+    var health: Int = 100  // Здоровье цели
+)
