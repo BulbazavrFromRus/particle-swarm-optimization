@@ -19,6 +19,8 @@ data class Particle(
 
         for (particle in particles) {
             if (particle != this) {
+
+
                 val dx = particle.position.x - position.x
                 val dy = particle.position.y - position.y
                 val distance = sqrt(dx * dx + dy * dy)
@@ -28,20 +30,31 @@ data class Particle(
                     separation.y -= dy
                 }
 
+                //Суммирует координаты всех соседей для среднего положения
                 cohesion.x += particle.position.x
                 cohesion.y += particle.position.y
+
+                //Суммирует скорости всех соседей для направления роя
                 alignment.x += particle.velocity.x
                 alignment.y += particle.velocity.y
+
+                //Используется, чтобы затем разделить сумму координат (cohesion) и скоростей (alignment) на количество соседей.
                 neighborCount++
             }
         }
 
         if (neighborCount > 0) {
             val invNeighbors = 1f / neighborCount
+            //вычисляем средние значения
+            //cohesion.x * invNeighbors - получаем среднюю координату x и y
             cohesion.x = (cohesion.x * invNeighbors - position.x) * cohesionW
             cohesion.y = (cohesion.y * invNeighbors - position.y) * cohesionW
+
+            //умножаем получившийся separation на separationW вес
             separation.x *= separationW
             separation.y *= separationW
+
+
             alignment.x = (alignment.x * invNeighbors - velocity.x) * alignmentW
             alignment.y = (alignment.y * invNeighbors - velocity.y) * alignmentW
         }
@@ -49,6 +62,7 @@ data class Particle(
         velocity.x = (velocity.x + cohesion.x + separation.x + alignment.x).coerceIn(-maxSpeed, maxSpeed)
         velocity.y = (velocity.y + cohesion.y + separation.y + alignment.y).coerceIn(-maxSpeed, maxSpeed)
 
+        //обновление позиции частицы (с новой скоростью)
         position.x += velocity.x
         position.y += velocity.y
 
@@ -56,3 +70,4 @@ data class Particle(
         if (position.y < 0 || position.y > screenHeight) velocity.y = -velocity.y
     }
 }
+
