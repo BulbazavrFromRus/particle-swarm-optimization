@@ -10,9 +10,11 @@ data class Particle(
     var velocity: PointF,
     var radius: Float,
     var color: Int,
-    var bullets: Int = 20,         // Количество патронов
-    var target: Target? = null,    // Текущая цель
-    var isActive: Boolean = true   // Активен ли дрон
+    var bullets: Int = 20,
+    var target: Target? = null,
+
+    //Is dron active
+    var isActive: Boolean = true
 ) {
     constructor(
         x: Float, y: Float, speedX: Float, speedY: Float,
@@ -37,6 +39,10 @@ data class Particle(
         // Выбор новой цели если нет текущей
         if (target == null || target!!.health <= 0) {
             target = targets.filter { it.health > 0 }
+
+                //находим минимальное расстояние от роя до цели
+                //выбираем ближайшую цель
+
                 .minByOrNull {
                     sqrt(
                         (it.x - position.x).pow(2) +
@@ -46,6 +52,8 @@ data class Particle(
         }
 
         // Движение к цели
+
+        //если таргет не равно null
         target?.let { t ->
             val dx = t.x - position.x
             val dy = t.y - position.y

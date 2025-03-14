@@ -14,6 +14,7 @@ class ParticleView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+
     private val particles = mutableListOf<Particle>()
     private val targets = mutableListOf<Target>()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -133,8 +134,4 @@ class ParticleView @JvmOverloads constructor(
     }
 }
 
-data class Target(
-    val x: Float,
-    val y: Float,
-    var health: Int = 100  // Здоровье цели
-)
+
