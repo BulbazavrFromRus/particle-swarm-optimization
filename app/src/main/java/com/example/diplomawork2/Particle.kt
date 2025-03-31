@@ -12,8 +12,6 @@ data class Particle(
     var color: Int,
     var bullets: Int = 20,
     var target: Target? = null,
-
-    //Is dron active
     var isActive: Boolean = true
 ) {
     constructor(
@@ -36,13 +34,8 @@ data class Particle(
         var alignment = PointF()
         var neighborCount = 0
 
-        // Выбор новой цели если нет текущей
-        if (target == null || target!!.health <= 0) {
+        if (target == null || target!!.health <= 0 || target!!.isBeingDragged) {
             target = targets.filter { it.health > 0 }
-
-                //находим минимальное расстояние от роя до цели
-                //выбираем ближайшую цель
-
                 .minByOrNull {
                     sqrt(
                         (it.x - position.x).pow(2) +
@@ -51,9 +44,6 @@ data class Particle(
                 }
         }
 
-        // Движение к цели
-
-        //если таргет не равно null
         target?.let { t ->
             val dx = t.x - position.x
             val dy = t.y - position.y
@@ -69,7 +59,6 @@ data class Particle(
             velocity.y = dy.coerceIn(-maxSpeed, maxSpeed)
         }
 
-        // Базовое поведение роя
         for (particle in particles) {
             if (particle != this && particle.isActive) {
                 val dx = particle.position.x - position.x
@@ -108,14 +97,12 @@ data class Particle(
         position.x += velocity.x
         position.y += velocity.y
 
-        // Границы экрана
         position.x = position.x.coerceIn(0f, screenWidth)
         position.y = position.y.coerceIn(0f, screenHeight)
 
-        // Деактивация при отсутствии патронов
         if (bullets <= 0) {
             isActive = false
-            color = Color.argb(128, 255, 0, 0) // Полупрозрачный красный
+            color = Color.argb(128, 255, 0, 0)
         }
     }
 }

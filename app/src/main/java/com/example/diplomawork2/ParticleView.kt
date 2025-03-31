@@ -8,43 +8,35 @@ import android.media.MediaPlayer
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 class ParticleView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-
     private val particles = mutableListOf<Particle>()
     private val targets = mutableListOf<Target>()
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-    }
-    private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-    }
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val targetRadius = 30f
 
-    // Настройки
     private val cohesionWeight = 0.005f
     private val separationWeight = 0.1f
     private val alignmentWeight = 0.05f
     private val minDistance = 50f
     private val maxSpeed = 5f
-    private val droneCount = 10  // Количество дронов
+    private val droneCount = 10
 
-    init {
-        setWillNotDraw(false)
-        generateParticles(droneCount)
-    }
-
+    private var selectedTarget: Target? = null
     private var mediaPlayer: MediaPlayer
 
     init {
+        setWillNotDraw(false)
         mediaPlayer = MediaPlayer.create(context, R.raw.gimn)
         mediaPlayer.start()
-        mediaPlayer.setOnCompletionListener {
-            mediaPlayer.start()
-        }
+        mediaPlayer.setOnCompletionListener { mediaPlayer.start() }
     }
 
     private fun generateParticles(count: Int) {
@@ -52,13 +44,12 @@ class ParticleView @JvmOverloads constructor(
         repeat(count) {
             val x = Random.nextFloat() * width
             val y = Random.nextFloat() * height
-            val radius = 15f  // Фиксированный размер дрона
-            val speedX = Random.nextFloat() * 4 - 2
-            val speedY = Random.nextFloat() * 4 - 2
             particles.add(
                 Particle(
-                    x, y, speedX, speedY,
-                    radius, Color.BLUE, bullets = 200
+                    x, y,
+                    Random.nextFloat() * 4 - 2,
+                    Random.nextFloat() * 4 - 2,
+                    15f, Color.BLUE, bullets = 200
                 )
             )
         }
@@ -66,14 +57,13 @@ class ParticleView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        //canvas.drawColor(Color.BLACK)
+        canvas.drawColor(Color.BLACK)
 
-        // Отрисовка дронов
+        // Дроны
         particles.filter { it.isActive }.forEach { drone ->
             paint.color = drone.color
             canvas.drawCircle(drone.position.x, drone.position.y, drone.radius, paint)
 
-            // Индикатор патронов
             paint.color = Color.WHITE
             canvas.drawRect(
                 drone.position.x - 15f,
@@ -84,15 +74,20 @@ class ParticleView @JvmOverloads constructor(
             )
         }
 
-        // Отрисовка целей
-        targets.filter { it.health > 0 }.forEach { target ->
+        // Цели
+        targets.forEach { target ->
             targetPaint.color = Color.argb(
                 255,
                 255,
                 (255 * (target.health.toFloat() / 100)).toInt(),
                 0
             )
-            canvas.drawCircle(target.x, target.y, 30f, targetPaint)
+            canvas.drawCircle(target.x, target.y, targetRadius, targetPaint)
+
+            if (target.isBeingDragged) {
+                targetPaint.color = Color.CYAN
+                canvas.drawCircle(target.x, target.y, targetRadius + 5f, targetPaint)
+            }
         }
 
         updateParticles()
@@ -117,10 +112,44 @@ class ParticleView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        event?.let {
-            if (it.action == MotionEvent.ACTION_DOWN) {
-                targets.add(Target(it.x, it.y))
-                invalidate()
+        event?.let { e ->
+            when (e.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    selectedTarget = targets.filter {
+                        sqrt(
+                            (e.x - it.x).pow(2) +
+                                    (e.y - it.y).pow(2)
+                        ) < targetRadius * 2
+                    }.minByOrNull {
+                        sqrt(
+                            (e.x - it.x).pow(2) +
+                                    (e.y - it.y).pow(2)
+                        )
+                    }
+
+                    selectedTarget?.let {
+                        it.isBeingDragged = true
+                        targets.remove(it)
+                        targets.add(it)
+                    } ?: run {
+                        targets.add(Target(e.x, e.y))
+                    }
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    selectedTarget?.let {
+                        it.x = e.x
+                        it.y = e.y
+                        invalidate()
+                    }
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    selectedTarget?.isBeingDragged = false
+                    selectedTarget = null
+                }
+
+                else -> {}
             }
         }
         return true
@@ -128,10 +157,6 @@ class ParticleView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (w > 0 && h > 0) {
-            generateParticles(droneCount)
-        }
+        if (w > 0 && h > 0) generateParticles(droneCount)
     }
 }
-
-
