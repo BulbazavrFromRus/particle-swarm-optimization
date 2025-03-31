@@ -34,14 +34,17 @@ data class Particle(
         var alignment = PointF()
         var neighborCount = 0
 
+        // Улучшение выбора цели
+        val availableTargets = targets.filter { it.health > 0 }
+        if (availableTargets.isEmpty()) return
+
         if (target == null || target!!.health <= 0 || target!!.isBeingDragged) {
-            target = targets.filter { it.health > 0 }
-                .minByOrNull {
-                    sqrt(
-                        (it.x - position.x).pow(2) +
-                                (it.y - position.y).pow(2)
-                    )
-                }
+            target = availableTargets.minByOrNull {
+                sqrt(
+                    (it.x - position.x).pow(2) +
+                            (it.y - position.y).pow(2)
+                )
+            }
         }
 
         target?.let { t ->
@@ -49,7 +52,8 @@ data class Particle(
             val dy = t.y - position.y
             val distanceToTarget = sqrt(dx*dx + dy*dy)
 
-            if (distanceToTarget < 50f && bullets > 0) {
+            // Увеличение радиуса атаки
+            if (distanceToTarget < 100f && bullets > 0) {
                 t.health--
                 bullets--
                 if (t.health <= 0) target = null
@@ -59,6 +63,7 @@ data class Particle(
             velocity.y = dy.coerceIn(-maxSpeed, maxSpeed)
         }
 
+        // Улучшение поведения роя
         for (particle in particles) {
             if (particle != this && particle.isActive) {
                 val dx = particle.position.x - position.x
