@@ -9,6 +9,7 @@ import android.graphics.PointF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.RelativeLayout
 import kotlin.math.pow
@@ -42,7 +43,7 @@ class ParticleView @JvmOverloads constructor(
     private val minDistance = 50f
     private val maxSpeed = 5f
     private val droneCount = 10
-    private val gameDuration = 300f
+    private val gameDuration = 10f
 
     // Состояние игры
     private var gameTimer = 0f
@@ -56,31 +57,21 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun setupRestartButton() {
+        (parent as? ViewGroup)?.removeView(restartButton)
         restartButton = Button(context).apply {
             text = "Новая игра"
-            setBackgroundColor(Color.LTGRAY)
-            setTextColor(Color.BLACK)
+            setBackgroundColor(Color.BLUE)
+            setTextColor(Color.GREEN)
             setOnClickListener { restartGame() }
             visibility = View.GONE
+            val params = RelativeLayout.LayoutParams(300, 100)
+            params.addRule(RelativeLayout.CENTER_HORIZONTAL)
+            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
 
-            val params = RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT,
-                RelativeLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                addRule(RelativeLayout.CENTER_HORIZONTAL)
-                addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-                bottomMargin = 50
-            }
+            params.bottomMargin = 300
             layoutParams = params
         }
-
-        if (parent is RelativeLayout) {
-            (parent as RelativeLayout).addView(restartButton)
-        } else {
-            (context as MainActivity).runOnUiThread {
-                (context as MainActivity).addContentView(restartButton, restartButton!!.layoutParams)
-            }
-        }
+        (parent as? RelativeLayout)?.addView(restartButton)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -151,8 +142,20 @@ class ParticleView @JvmOverloads constructor(
             val text = if (baseHealth <= 0) "Поражение!" else "Победа!"
             val color = if (baseHealth <= 0) Color.RED else Color.GREEN
             textPaint.color = color
-            canvas.drawText(text, width / 2f - 150f, height / 2f, textPaint)
+
+            // Принудительное создание кнопки
+            if (restartButton == null) {
+                setupRestartButton()
+            }
+
             restartButton?.visibility = View.VISIBLE
+
+            canvas.drawText(
+                text,
+                width / 2f - 150f,
+                height / 2f + 30f,
+                textPaint
+            )
         } else {
             restartButton?.visibility = View.GONE
         }
@@ -206,6 +209,9 @@ class ParticleView @JvmOverloads constructor(
         if (baseHealth <= 0 || gameTimer <= 0) {
             isGameActive = false
             isGameFinished = true
+
+            // Принудительное обновление кнопки
+            setupRestartButton()
             restartButton?.visibility = View.VISIBLE
         }
     }

@@ -10,15 +10,15 @@ data class Particle(
     var velocity: PointF,
     var radius: Float,
     var color: Int,
-    var bullets: Int = 20,
+    var bullets: Int = 2000,
     var target: Target? = null,
     var isActive: Boolean = true
 ) {
     constructor(
         x: Float, y: Float, speedX: Float, speedY: Float,
-        radius: Float, color: Int, bullets: Int = 20
+        radius: Float, color: Int, bullets: Int = 2000
     ) : this(
-        PointF(x, y), PointF(speedX, speedY), radius, color, bullets
+        PointF(x, y), PointF(speedX.toFloat(), speedY.toFloat()), radius, color, bullets
     )
 
     fun update(
