@@ -15,7 +15,7 @@ class SplashScreen : AppCompatActivity() {
 
         // Настройка видео-фона
         val videoView = findViewById<VideoView>(R.id.backgroundVideo)
-        val videoPath = "android.resource://${packageName}/${R.raw.background_video}" // Замените на имя вашего видео
+        val videoPath = "android.resource://${packageName}/${R.raw.back2}" // Замените на имя вашего видео
         videoView.apply {
             setVideoURI(Uri.parse(videoPath))
             setOnPreparedListener { mp ->
