@@ -1,4 +1,3 @@
-// ParticleView.kt
 package com.example.diplomawork2
 
 import android.content.Context
@@ -9,9 +8,11 @@ import android.graphics.PointF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
-import android.widget.RelativeLayout
+import androidx.core.content.ContextCompat
+
+import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -32,7 +33,7 @@ class ParticleView @JvmOverloads constructor(
     // Параметры базы
     private val baseRadius = 50f
     private var basePosition = PointF(0f, 0f)
-    private var baseHealth = 1000
+    private var baseHealth = 100
     private val basePaint = Paint().apply { color = Color.GREEN }
 
     // Настройки игры
@@ -43,36 +44,20 @@ class ParticleView @JvmOverloads constructor(
     private val minDistance = 50f
     private val maxSpeed = 5f
     private val droneCount = 10
-    private val gameDuration = 10f
+    private val gameDuration = 300f
 
     // Состояние игры
     private var gameTimer = 0f
     private var isGameActive = false
     private var isGameFinished = false
-    private var restartButton: Button? = null
+    private var level = 1
+    private var isVictory = false
 
     init {
         setWillNotDraw(false)
-        setupRestartButton()
+        generateParticles()
     }
 
-    private fun setupRestartButton() {
-        (parent as? ViewGroup)?.removeView(restartButton)
-        restartButton = Button(context).apply {
-            text = "Новая игра"
-            setBackgroundColor(Color.BLUE)
-            setTextColor(Color.GREEN)
-            setOnClickListener { restartGame() }
-            visibility = View.GONE
-            val params = RelativeLayout.LayoutParams(300, 100)
-            params.addRule(RelativeLayout.CENTER_HORIZONTAL)
-            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-
-            params.bottomMargin = 300
-            layoutParams = params
-        }
-        (parent as? RelativeLayout)?.addView(restartButton)
-    }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -132,32 +117,42 @@ class ParticleView @JvmOverloads constructor(
 
     private fun drawGameInfo(canvas: Canvas) {
         canvas.drawText(
-            "Время: ${(gameTimer).toInt()} сек",
+            "Уровень: $level",
             20f,
-            60f,
+            30f,
             textPaint
         )
 
         if (isGameFinished) {
-            val text = if (baseHealth <= 0) "Поражение!" else "Победа!"
-            val color = if (baseHealth <= 0) Color.RED else Color.GREEN
-            textPaint.color = color
+            val activity = context as? AppCompatActivity
+            val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
+            val restartButton = activity?.findViewById<Button>(R.id.restart_button)
 
-            // Принудительное создание кнопки
-            if (restartButton == null) {
-                setupRestartButton()
-            }
 
             restartButton?.visibility = View.VISIBLE
 
-            canvas.drawText(
-                text,
-                width / 2f - 150f,
-                height / 2f + 30f,
-                textPaint
-            )
+            if (isVictory) {
+                nextLevelButton?.visibility = View.VISIBLE
+                canvas.drawText(
+                    "Поздравляем! Вы победили!",
+                    width / 2f - 150f,
+                    height / 2f - 30f,
+                    textPaint
+                )
+            } else {
+                canvas.drawText(
+                    "К сожалению, вы проиграли.",
+                    width / 2f - 150f,
+                    height / 2f - 30f,
+                    textPaint
+                )
+            }
         } else {
+            val activity = context as? AppCompatActivity
+            val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
+            val  restartButton = activity?.findViewById<Button>(R.id.restart_button)
             restartButton?.visibility = View.GONE
+            nextLevelButton?.visibility = View.GONE
         }
     }
 
@@ -206,13 +201,14 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun checkGameOver() {
-        if (baseHealth <= 0 || gameTimer <= 0) {
+        if (baseHealth <= 0) {
             isGameActive = false
             isGameFinished = true
-
-            // Принудительное обновление кнопки
-            setupRestartButton()
-            restartButton?.visibility = View.VISIBLE
+            isVictory = true // Победа, если база уничтожена целями
+        } else if (gameTimer <= 0) {
+            isGameActive = false
+            isGameFinished = true
+            isVictory = false // Поражение, если время истекло
         }
     }
 
@@ -265,12 +261,37 @@ class ParticleView @JvmOverloads constructor(
         baseHealth = 1000
         generateParticles()
         targets.clear()
+        val activity = context as? AppCompatActivity
+        val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
+        val  restartButton = activity?.findViewById<Button>(R.id.restart_button)
         restartButton?.visibility = View.GONE
+        nextLevelButton?.visibility = View.GONE
+        isVictory = false
     }
 
-    private fun restartGame() {
+    fun restartGame() {
         startNewGame()
+        level = 1
         invalidate()
+    }
+
+    fun nextLevel() {
+        level++
+        gameTimer = gameDuration
+        baseHealth = 1000
+        generateParticles()
+        targets.clear()
+
+        val activity = context as? AppCompatActivity
+        val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
+        val restartButton = activity?.findViewById<Button>(R.id.restart_button)
+
+        restartButton?.visibility = View.GONE
+        nextLevelButton?.visibility = View.GONE
+
+        isGameActive = true
+        isGameFinished = false
+        isVictory = false
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -282,6 +303,7 @@ class ParticleView @JvmOverloads constructor(
 
     private fun generateParticles() {
         particles.clear()
+        val droneCount = level * 10
         repeat(droneCount) {
             particles.add(
                 Particle(
