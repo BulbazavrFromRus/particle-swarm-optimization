@@ -3,7 +3,7 @@ package com.example.diplomawork2
 data class Target(
     var x: Float,
     var y: Float,
-    var health: Int = 100,
+    var health: Int = 1000,
     var isBeingDragged: Boolean = false,
-    var speed: Float = 1.5f
+    var speed: Float = 3.5f
 )

@@ -10,8 +10,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
-import androidx.core.content.ContextCompat
-
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -30,23 +29,22 @@ class ParticleView @JvmOverloads constructor(
         textSize = 50f
     }
 
-    // Параметры базы
     private val baseRadius = 50f
-    private var basePosition = PointF(0f, 0f)
-    private var baseHealth = 100
-    private val basePaint = Paint().apply { color = Color.GREEN }
+    private val base = Base(
+        PointF(0f, 0f),
+        baseRadius,
+        1000
+    )
 
-    // Настройки игры
     private val targetRadius = 30f
     private val cohesionWeight = 0.005f
     private val separationWeight = 0.1f
     private val alignmentW = 0.05f
     private val minDistance = 50f
     private val maxSpeed = 5f
-    private val droneCount = 10
-    private val gameDuration = 300f
+    private val droneCount = 50
+    private var gameDuration = 30f
 
-    // Состояние игры
     private var gameTimer = 0f
     private var isGameActive = false
     private var isGameFinished = false
@@ -57,7 +55,6 @@ class ParticleView @JvmOverloads constructor(
         setWillNotDraw(false)
         generateParticles()
     }
-
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -75,13 +72,8 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun drawBase(canvas: Canvas) {
-        basePaint.alpha = (baseHealth * 255 / 1000).toInt()
-        canvas.drawCircle(
-            basePosition.x + baseRadius,
-            basePosition.y + baseRadius,
-            baseRadius,
-            basePaint
-        )
+        val basePaint = Paint()
+        base.draw(canvas, basePaint)
     }
 
     private fun drawDrones(canvas: Canvas) {
@@ -123,11 +115,13 @@ class ParticleView @JvmOverloads constructor(
             textPaint
         )
 
+        val timerText = String.format(Locale.getDefault(), "Время: %.1f", gameTimer)
+        canvas.drawText(timerText, 20f, 80f, textPaint)
+
         if (isGameFinished) {
             val activity = context as? AppCompatActivity
             val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
             val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-
 
             restartButton?.visibility = View.VISIBLE
 
@@ -150,7 +144,8 @@ class ParticleView @JvmOverloads constructor(
         } else {
             val activity = context as? AppCompatActivity
             val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-            val  restartButton = activity?.findViewById<Button>(R.id.restart_button)
+            val restartButton = activity?.findViewById<Button>(R.id.restart_button)
+
             restartButton?.visibility = View.GONE
             nextLevelButton?.visibility = View.GONE
         }
@@ -161,14 +156,15 @@ class ParticleView @JvmOverloads constructor(
             gameTimer -= 0.016f
             updateTargets()
             updateParticles()
+            base.update(targets)
             checkGameOver()
         }
     }
 
     private fun updateTargets() {
         targets.forEach { target ->
-            val dx = basePosition.x + baseRadius - target.x
-            val dy = basePosition.y + baseRadius - target.y
+            val dx = base.position.x + base.radius - target.x
+            val dy = base.position.y + base.radius - target.y
             val distance = sqrt(dx * dx + dy * dy)
 
             if (distance > 0) {
@@ -176,8 +172,8 @@ class ParticleView @JvmOverloads constructor(
                 target.y += dy / distance * target.speed
             }
 
-            if (distance < baseRadius) {
-                baseHealth -= 10
+            if (distance < base.radius) {
+                base.health -= 10
                 target.health = 0
             }
         }
@@ -201,7 +197,7 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun checkGameOver() {
-        if (baseHealth <= 0) {
+        if (base.health <= 0) {
             isGameActive = false
             isGameFinished = true
             isVictory = true // Победа, если база уничтожена целями
@@ -258,12 +254,12 @@ class ParticleView @JvmOverloads constructor(
         isGameActive = true
         isGameFinished = false
         gameTimer = gameDuration
-        baseHealth = 1000
+        base.health = 100
         generateParticles()
         targets.clear()
         val activity = context as? AppCompatActivity
         val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-        val  restartButton = activity?.findViewById<Button>(R.id.restart_button)
+        val restartButton = activity?.findViewById<Button>(R.id.restart_button)
         restartButton?.visibility = View.GONE
         nextLevelButton?.visibility = View.GONE
         isVictory = false
@@ -278,17 +274,14 @@ class ParticleView @JvmOverloads constructor(
     fun nextLevel() {
         level++
         gameTimer = gameDuration
-        baseHealth = 1000
+        base.health = 100
         generateParticles()
         targets.clear()
-
         val activity = context as? AppCompatActivity
         val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
         val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-
         restartButton?.visibility = View.GONE
         nextLevelButton?.visibility = View.GONE
-
         isGameActive = true
         isGameFinished = false
         isVictory = false
@@ -296,8 +289,8 @@ class ParticleView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        basePosition.x = w / 2f - baseRadius
-        basePosition.y = h - baseRadius * 2
+        base.position.x = w / 2f - base.radius
+        base.position.y = h - base.radius * 2
         generateParticles()
     }
 
