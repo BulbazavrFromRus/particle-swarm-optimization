@@ -1,6 +1,8 @@
 package com.example.diplomawork2
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -11,7 +13,6 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import androidx.core.content.ContextCompat
-import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -43,7 +44,7 @@ class ParticleView @JvmOverloads constructor(
     private val minDistance = 50f
     private val maxSpeed = 5f
     private val droneCount = 10
-    private var gameDuration = 300f
+    private var gameDuration = 30f
 
     private var gameTimer = 0f
     private var isGameActive = false
@@ -51,14 +52,43 @@ class ParticleView @JvmOverloads constructor(
     private var level = 1
     private var isVictory = false
 
+    private var backgroundResource = 0
+    private var scaledBitmap: Bitmap? = null
+
     init {
         setWillNotDraw(false)
         generateParticles()
     }
 
+    private fun loadBackgroundResource() {
+        val prefs = context.getSharedPreferences("game_settings", Context.MODE_PRIVATE)
+        backgroundResource = prefs.getInt("background_resource", R.drawable.background1)
+        // setBackground() // moved call to onSizeChanged
+    }
+
+    private fun setBackground() {
+        if (width > 0 && height > 0) { // Check if width and height are valid
+            val backgroundBitmap = BitmapFactory.decodeResource(resources, backgroundResource)
+            scaledBitmap = Bitmap.createScaledBitmap(backgroundBitmap, width, height, true)
+        }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Now it's safe to call setBackground
+        loadBackgroundResource()
+        setBackground()
+        base.position.x = w / 2f - base.radius
+        base.position.y = h - base.radius * 2
+        generateParticles()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawColor(Color.BLACK)
+
+        scaledBitmap?.let {
+            canvas.drawBitmap(it, 0f, 0f, null)
+        }
 
         drawBase(canvas)
         drawDrones(canvas)
@@ -97,7 +127,6 @@ class ParticleView @JvmOverloads constructor(
         }
     }
 
-
     private fun drawTargets(canvas: Canvas) {
         targets.forEach { target ->
             targetPaint.color = Color.argb(
@@ -128,7 +157,6 @@ class ParticleView @JvmOverloads constructor(
             val activity = context as? AppCompatActivity
             val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
             val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-
             restartButton?.visibility = View.VISIBLE
 
             if (isVictory) {
@@ -293,28 +321,24 @@ class ParticleView @JvmOverloads constructor(
         isVictory = false
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        base.position.x = w / 2f - base.radius
-        base.position.y = h - base.radius * 2
-        generateParticles()
-    }
-
     private fun generateParticles() {
-        particles.clear()
-        val droneCount = level * 10
-        repeat(droneCount) {
-            particles.add(
-                Particle(
-                    x = Random.nextFloat() * width,
-                    y = Random.nextFloat() * height,
-                    speedX = Random.nextFloat() * 2 - 1,
-                    speedY = Random.nextFloat() * 2 - 1,
-                    radius = 15f,
-                    color = ContextCompat.getColor(context, R.color.drone_color),
-                    bullets = 2000
+        if (width > 0 && height > 0) {
+            particles.clear()
+            val droneCount = level * 10
+            repeat(droneCount) {
+                particles.add(
+                    Particle(
+                        x = Random.nextFloat() * width,
+                        y = Random.nextFloat() * height,
+                        speedX = Random.nextFloat() * 2 - 1,
+                        speedY = Random.nextFloat() * 2 - 1,
+                        radius = 15f,
+                        color = ContextCompat.getColor(context, R.color.drone_color),
+                        bullets = 2000
+                    )
                 )
-            )
+            }
         }
     }
+
 }

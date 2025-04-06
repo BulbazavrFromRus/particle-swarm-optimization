@@ -16,8 +16,6 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var selectedTextView: TextView
     private lateinit var playButton: Button
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
@@ -25,35 +23,37 @@ class SettingsActivity : AppCompatActivity() {
         background1Image = findViewById(R.id.background1_image)
         background2Image = findViewById(R.id.background2_image)
         background3Image = findViewById(R.id.background3_image)
-
         selectedTextView = findViewById(R.id.selected_text)
         playButton = findViewById(R.id.play_button)
 
         background1Image.setOnClickListener {
-            selectBackground(1)
+            selectBackground(R.drawable.background1)
         }
+
         background2Image.setOnClickListener {
-            selectBackground(2)
+            selectBackground(R.drawable.background2)
         }
+
         background3Image.setOnClickListener {
-            selectBackground(3)
+            selectBackground(R.drawable.background3)
         }
+
 
         playButton.setOnClickListener {
             startGame()
         }
     }
 
-    private fun selectBackground(background: Int){
+    private fun selectBackground(backgroundResource: Int) {
         val prefs = getSharedPreferences("game_settings", MODE_PRIVATE)
+        prefs.edit().putInt("background_resource", backgroundResource).apply()
 
-        prefs.edit().putInt("background", background).apply()
         selectedTextView.text = "Фон выбран"
         selectedTextView.visibility = View.VISIBLE
         playButton.visibility = View.VISIBLE
     }
 
-    private fun startGame(){
+    private fun startGame() {
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
     }
