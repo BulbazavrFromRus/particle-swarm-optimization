@@ -29,5 +29,10 @@ class SplashScreen : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+        findViewById<Button>(R.id.settings_button).setOnClickListener{
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

@@ -10,7 +10,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
-import java.util.Locale
+import androidx.core.content.ContextCompat
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -42,8 +42,8 @@ class ParticleView @JvmOverloads constructor(
     private val alignmentW = 0.05f
     private val minDistance = 50f
     private val maxSpeed = 5f
-    private val droneCount = 50
-    private var gameDuration = 30f
+    private val droneCount = 10
+    private var gameDuration = 300f
 
     private var gameTimer = 0f
     private var isGameActive = false
@@ -73,12 +73,18 @@ class ParticleView @JvmOverloads constructor(
 
     private fun drawBase(canvas: Canvas) {
         val basePaint = Paint()
-        base.draw(canvas, basePaint)
+        basePaint.color = ContextCompat.getColor(context, R.color.base_color)
+        basePaint.alpha = (base.health * 255 / 1000).toInt()
+        canvas.drawCircle(base.position.x + base.radius, base.position.y + base.radius, base.radius, basePaint)
     }
 
     private fun drawDrones(canvas: Canvas) {
         particles.forEach { drone ->
-            paint.color = drone.color
+            if (drone.bullets <= 0) {
+                paint.color = Color.RED // Красный цвет для уничтоженных дронов
+            } else {
+                paint.color = ContextCompat.getColor(context, R.color.drone_color)
+            }
             canvas.drawCircle(drone.position.x, drone.position.y, drone.radius, paint)
             paint.color = Color.WHITE
             canvas.drawRect(
@@ -90,6 +96,7 @@ class ParticleView @JvmOverloads constructor(
             )
         }
     }
+
 
     private fun drawTargets(canvas: Canvas) {
         targets.forEach { target ->
@@ -108,14 +115,13 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun drawGameInfo(canvas: Canvas) {
-        canvas.drawText(
-            "Уровень: $level",
-            20f,
-            30f,
-            textPaint
-        )
+        val levelText = context.getString(R.string.level_text, level)
+        canvas.drawText(levelText, 20f, 30f, textPaint)
 
-        val timerText = String.format(Locale.getDefault(), "Время: %.1f", gameTimer)
+        val timerText = String.format(
+            context.getString(R.string.time_text),
+            gameTimer
+        )
         canvas.drawText(timerText, 20f, 80f, textPaint)
 
         if (isGameFinished) {
@@ -128,14 +134,14 @@ class ParticleView @JvmOverloads constructor(
             if (isVictory) {
                 nextLevelButton?.visibility = View.VISIBLE
                 canvas.drawText(
-                    "Поздравляем! Вы победили!",
+                    context.getString(R.string.win_text),
                     width / 2f - 150f,
                     height / 2f - 30f,
                     textPaint
                 )
             } else {
                 canvas.drawText(
-                    "К сожалению, вы проиграли.",
+                    context.getString(R.string.lose_text),
                     width / 2f - 150f,
                     height / 2f - 30f,
                     textPaint
@@ -254,7 +260,7 @@ class ParticleView @JvmOverloads constructor(
         isGameActive = true
         isGameFinished = false
         gameTimer = gameDuration
-        base.health = 100
+        base.health = 1000
         generateParticles()
         targets.clear()
         val activity = context as? AppCompatActivity
@@ -274,7 +280,7 @@ class ParticleView @JvmOverloads constructor(
     fun nextLevel() {
         level++
         gameTimer = gameDuration
-        base.health = 100
+        base.health = 1000
         generateParticles()
         targets.clear()
         val activity = context as? AppCompatActivity
@@ -305,8 +311,8 @@ class ParticleView @JvmOverloads constructor(
                     speedX = Random.nextFloat() * 2 - 1,
                     speedY = Random.nextFloat() * 2 - 1,
                     radius = 15f,
-                    color = Color.BLUE,
-                    bullets = 200
+                    color = ContextCompat.getColor(context, R.color.drone_color),
+                    bullets = 2000
                 )
             )
         }
