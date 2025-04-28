@@ -22,10 +22,14 @@ data class Particle(
     )
 
     fun update(
-        particles: List<Particle>, targets: List<Target>,
-        screenWidth: Float, screenHeight: Float,
-        cohesionW: Float, separationW: Float,
-        alignmentW: Float, minDist: Float, maxSpeed: Float
+        particles: List<Particle>,
+        targets: List<Target>,
+        screenWidth: Float,
+        screenHeight: Float,
+        cohesionW: Float,
+        separationW: Float,
+        alignmentW: Float,
+        minDist: Float, maxSpeed: Float
     ) {
         if (!isActive) return
 

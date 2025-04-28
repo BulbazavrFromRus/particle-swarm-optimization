@@ -68,6 +68,8 @@ class ParticleView @JvmOverloads constructor(
 
     private fun setBackground() {
         if (width > 0 && height > 0) { // Check if width and height are valid
+
+            //Thanks to BitmapFactory we get background from resources
             val backgroundBitmap = BitmapFactory.decodeResource(resources, backgroundResource)
             scaledBitmap = Bitmap.createScaledBitmap(backgroundBitmap, width, height, true)
         }
@@ -104,7 +106,7 @@ class ParticleView @JvmOverloads constructor(
     private fun drawBase(canvas: Canvas) {
         val basePaint = Paint()
         basePaint.color = ContextCompat.getColor(context, R.color.base_color)
-        basePaint.alpha = (base.health * 255 / 1000).toInt()
+        basePaint.alpha = (base.health * 255 / 1000)
         canvas.drawCircle(base.position.x + base.radius, base.position.y + base.radius, base.radius, basePaint)
     }
 
@@ -118,9 +120,9 @@ class ParticleView @JvmOverloads constructor(
             canvas.drawCircle(drone.position.x, drone.position.y, drone.radius, paint)
             paint.color = Color.WHITE
             canvas.drawRect(
-                drone.position.x - 15f,
+                drone.position.x - 2f,
                 drone.position.y + 20f,
-                drone.position.x + 15f * (drone.bullets.toFloat() / 20),
+                drone.position.x + 2f * (drone.bullets.toFloat() / 20),
                 drone.position.y + 23f,
                 paint
             )
