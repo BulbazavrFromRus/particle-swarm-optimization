@@ -1,0 +1,16 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <!-- Цвет фона кнопки -->
+    <solid android:color="@color/blueberry_color" />
+
+    <!-- Скругление углов -->
+  <!--  <corners android:radius="100dp" />-->
+
+    <!-- (Опционально) Обводка -->
+    <!--
+    <stroke
+        android:width="2dp"
+        android:color="#880000" />
+    -->
+</shape>

@@ -1,0 +1,11 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Светлый фон -->
+    <solid android:color="#F8FFFF"/> <!-- Можно заменить на свой светлый цвет -->
+    <!-- Серая тонкая граница -->
+    <stroke
+        android:width="2dp"
+        android:color="#CCCCCC"/> <!-- Цвет рамки как на вашем примере -->
+    <!-- Сильно скруглённые углы -->
+    <corners android:radius="32dp"/> <!-- Чем больше радиус, тем более "капсула" -->
+</shape>
