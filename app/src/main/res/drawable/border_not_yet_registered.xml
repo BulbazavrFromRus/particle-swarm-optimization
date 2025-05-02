@@ -1,0 +1,21 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Цвет заливки, если нужен фон; если нужен только контур, можно убрать -->
+    <solid android:color="#FFFFFF00"/> <!-- прозрачный фон -->
+
+    <!-- Толщина и цвет рамки -->
+    <stroke
+        android:width="2dp"
+        android:color="#FF0000"/>  <!-- красная рамка, замените цвет на нужный -->
+
+    <!-- Скругление углов (опционально) -->
+    <corners android:radius="8dp" />
+
+    <!-- Отступы внутри рамки (опционально) -->
+    <padding
+        android:left="4dp"
+        android:top="4dp"
+        android:right="4dp"
+        android:bottom="4dp" />
+</shape>
