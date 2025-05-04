@@ -12,18 +12,6 @@ class SplashScreen : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
-
-        // Настройка видео-фона
-        val videoView = findViewById<VideoView>(R.id.backgroundVideo)
-        val videoPath = "android.resource://${packageName}/${R.raw.back2}" // Замените на имя вашего видео
-        videoView.apply {
-            setVideoURI(Uri.parse(videoPath))
-            setOnPreparedListener { mp ->
-                mp.isLooping = true // Повтор видео
-                mp.start()
-            }
-        }
-
         findViewById<Button>(R.id.startButton).setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
