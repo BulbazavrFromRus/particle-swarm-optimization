@@ -1,12 +1,7 @@
 package com.example.diplomawork2
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -37,30 +32,4 @@ class SettingsActivity : AppCompatActivity() {
 
 
     }
-
-
-
-   /* private fun selectBackground(backgroundResource: Int) {
-        val prefs = getSharedPreferences("game_settings", MODE_PRIVATE)
-        prefs.edit().putInt("background_resource", backgroundResource).apply()
-    }
-*/
-    /*private fun selectBackground(backgroundResource: Int) {
-        val prefs = getSharedPreferences("game_settings", MODE_PRIVATE)
-        prefs.edit().putInt("background_resource", backgroundResource).apply()
-
-        selectedTextView.text = "Фон выбран"
-        selectedTextView.visibility = View.VISIBLE
-        playButton.visibility = View.VISIBLE
-    }*/
-
-   /* private fun startGame() {
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-    }*/
-
-
-
-
-
 }

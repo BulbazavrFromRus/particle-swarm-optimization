@@ -61,27 +61,27 @@ class ParticleView @JvmOverloads constructor(
     }
 
 
-    private fun loadBackgroundResource() {
-        val prefs = context.getSharedPreferences("game_settings", Context.MODE_PRIVATE)
-        backgroundResource = prefs.getInt("background_resource", R.drawable.background1)
-        // setBackground() // moved call to onSizeChanged
-    }
-
-
-    private fun setBackground() {
-        if (width > 0 && height > 0) { // Check if width and height are valid
-
-            //Thanks to BitmapFactory we get background from resources
+    fun setCustomBackground(resId: Int) {
+        backgroundResource = resId
+        if (width > 0 && height > 0) {
             val backgroundBitmap = BitmapFactory.decodeResource(resources, backgroundResource)
-            scaledBitmap = Bitmap.createScaledBitmap(backgroundBitmap, width, height, true)
+            if (backgroundBitmap != null) {
+                scaledBitmap = Bitmap.createScaledBitmap(backgroundBitmap, width, height, true)
+            } else {
+                // Фон не найден, можно задать фон по умолчанию или оставить scaledBitmap = null
+                scaledBitmap = null
+            }
+            invalidate()
         }
     }
+
+
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         // Now it's safe to call setBackground
-        loadBackgroundResource()
-        setBackground()
+
+        setCustomBackground(backgroundResource)
         base.position.x = w / 2f - base.radius
         base.position.y = h - base.radius * 2
         generateParticles()

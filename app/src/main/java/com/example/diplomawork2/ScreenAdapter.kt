@@ -43,7 +43,7 @@ class ScreenAdapter(var screens: List<Screen>, var context: Context) : RecyclerV
             val intent = Intent(context, MainActivity::class.java)
 
             //i'm transmitting image from one activity to another activity
-            intent.putExtra("screenImage", screens[imageId].image)
+            intent.putExtra("screenImage", screens[position].image)
 
             context.startActivity(intent)
         }
