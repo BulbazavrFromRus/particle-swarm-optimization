@@ -60,11 +60,13 @@ class ParticleView @JvmOverloads constructor(
         generateParticles()
     }
 
+
     private fun loadBackgroundResource() {
         val prefs = context.getSharedPreferences("game_settings", Context.MODE_PRIVATE)
         backgroundResource = prefs.getInt("background_resource", R.drawable.background1)
         // setBackground() // moved call to onSizeChanged
     }
+
 
     private fun setBackground() {
         if (width > 0 && height > 0) { // Check if width and height are valid

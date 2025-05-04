@@ -1,5 +1,6 @@
 package com.example.diplomawork2
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -7,54 +8,59 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var background1Image: ImageButton
-    private lateinit var background2Image: ImageButton
-    private lateinit var background3Image: ImageButton
-    private lateinit var selectedTextView: TextView
-    private lateinit var playButton: Button
-
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        background1Image = findViewById(R.id.background1_image)
-        background2Image = findViewById(R.id.background2_image)
-        background3Image = findViewById(R.id.background3_image)
-        selectedTextView = findViewById(R.id.selected_text)
-        playButton = findViewById(R.id.play_button)
+        //This is a RecycleView object where there are being showed screens for game
+        val itemsList: RecyclerView = findViewById(R.id.itemsList)
 
-        background1Image.setOnClickListener {
-            selectBackground(R.drawable.background1)
-        }
-
-        background2Image.setOnClickListener {
-            selectBackground(R.drawable.background2)
-        }
-
-        background3Image.setOnClickListener {
-            selectBackground(R.drawable.background3)
-        }
+        //Create list of items
+        var screens = arrayListOf<Screen>()
 
 
-        playButton.setOnClickListener {
-            startGame()
-        }
+        //We create Screen objects in list
+        screens.add(Screen(1, "background1", "Black theme", "Plunge into the world of darkness", "Some text about this theme for screen"))
+        screens.add(Screen(2, "background2", "White theme", "Plunge into the world of darkness", "Some text about this theme for screen"))
+        screens.add(Screen(3, "background3", "Pink theme", "Plunge into the world of darkness", "Some text about this theme for screen"))
+        screens.add(Screen(4, "gray", "Gray theme", "Plunge into the world of darkness", "Some text about this theme for screen"))
+
+
+        itemsList.layoutManager = LinearLayoutManager(this)
+        itemsList.adapter = ScreenAdapter(screens, this)
+
+
     }
 
-    private fun selectBackground(backgroundResource: Int) {
+
+
+   /* private fun selectBackground(backgroundResource: Int) {
+        val prefs = getSharedPreferences("game_settings", MODE_PRIVATE)
+        prefs.edit().putInt("background_resource", backgroundResource).apply()
+    }
+*/
+    /*private fun selectBackground(backgroundResource: Int) {
         val prefs = getSharedPreferences("game_settings", MODE_PRIVATE)
         prefs.edit().putInt("background_resource", backgroundResource).apply()
 
         selectedTextView.text = "Фон выбран"
         selectedTextView.visibility = View.VISIBLE
         playButton.visibility = View.VISIBLE
-    }
+    }*/
 
-    private fun startGame() {
+   /* private fun startGame() {
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
-    }
+    }*/
+
+
+
+
+
 }
