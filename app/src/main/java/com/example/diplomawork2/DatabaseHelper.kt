@@ -20,7 +20,7 @@ class DatabaseHelper(private val context: Context): SQLiteOpenHelper(context, DA
         val createTableQuery = ("CREATE TABLE $TABLE_NAME (" +
                 "$COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_USERNAME TEXT, " +
-                "$COLUMN_PASSWORD TEXT);") // Добавлена точка с запятой
+                "$COLUMN_PASSWORD TEXT);")
         db?.execSQL(createTableQuery)
     }
 
