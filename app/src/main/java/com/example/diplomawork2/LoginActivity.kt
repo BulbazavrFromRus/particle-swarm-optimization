@@ -1,5 +1,6 @@
 package com.example.diplomawork2
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -13,7 +14,6 @@ class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var databaseHelper: DatabaseHelper
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,11 +41,15 @@ class LoginActivity : AppCompatActivity() {
         if(userExists){
             Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
             val intent = Intent(this, SplashScreen::class.java)
+            intent.putExtra("username", username) // probably not username
+
+            val sharedPref = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            sharedPref.edit().putString("username", username).apply()
+
             startActivity(intent)
             finish()
         }else{
             Toast.makeText(this, "Login Failed", Toast.LENGTH_SHORT).show()
         }
     }
-
 }

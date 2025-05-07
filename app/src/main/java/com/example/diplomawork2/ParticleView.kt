@@ -55,10 +55,17 @@ class ParticleView @JvmOverloads constructor(
     private var backgroundResource = 0
     private var scaledBitmap: Bitmap? = null
 
+    private var username: String? = null
+    private lateinit var databaseHelper: DatabaseHelper
+
     init {
+        val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        username = sharedPref.getString("username", null)
+        databaseHelper = DatabaseHelper(context)
         setWillNotDraw(false)
         generateParticles()
     }
+
 
 
     fun setCustomBackground(resId: Int) {
@@ -311,6 +318,14 @@ class ParticleView @JvmOverloads constructor(
 
     fun nextLevel() {
         level++
+
+        username?.let { user ->
+            val currentRecord = databaseHelper.getRecord(user)
+            if (level > currentRecord) {
+                databaseHelper.updateRecord(user, level)
+            }
+        }
+
         gameTimer = gameDuration
         base.health = 1000
         generateParticles()
@@ -324,6 +339,7 @@ class ParticleView @JvmOverloads constructor(
         isGameFinished = false
         isVictory = false
     }
+
 
     private fun generateParticles() {
         if (width > 0 && height > 0) {
