@@ -11,11 +11,14 @@ class SplashScreen : AppCompatActivity() {
 
     private lateinit var username: String
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
+
         username = intent.getStringExtra("username") ?: ""
+
 
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
