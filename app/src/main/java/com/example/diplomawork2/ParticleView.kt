@@ -1,5 +1,7 @@
 package com.example.diplomawork2
 
+import android.animation.Animator
+import android.animation.Animator.AnimatorListener
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -13,6 +15,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import androidx.core.content.ContextCompat
+import com.airbnb.lottie.LottieAnimationView
 import kotlin.math.pow
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -58,6 +61,8 @@ class ParticleView @JvmOverloads constructor(
     private var username: String? = null
     private lateinit var databaseHelper: DatabaseHelper
 
+    private var explosionAnimationView: LottieAnimationView? = null
+
     init {
         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         username = sharedPref.getString("username", null)
@@ -67,6 +72,9 @@ class ParticleView @JvmOverloads constructor(
     }
 
 
+    fun setExplosionAnimationView(view: LottieAnimationView) {
+        this.explosionAnimationView = view
+    }
 
     fun setCustomBackground(resId: Int) {
         backgroundResource = resId
@@ -173,6 +181,8 @@ class ParticleView @JvmOverloads constructor(
             if (isVictory) {
                 nextLevelButton?.visibility = View.VISIBLE
                 canvas.drawText(
+
+                    //In case of victory we display this text "Поздравляем вы победили"
                     context.getString(R.string.win_text),
                     width / 2f - 150f,
                     height / 2f - 30f,
@@ -246,6 +256,37 @@ class ParticleView @JvmOverloads constructor(
             isGameActive = false
             isGameFinished = true
             isVictory = true // Победа, если база уничтожена целями
+
+            //Explosion animation
+            explosionAnimationView?.apply {
+                visibility = View.VISIBLE
+                setAnimation(R.raw.explosion)
+                loop(false)
+                speed = 0.5f
+                playAnimation()
+                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                addAnimatorListener(object : Animator.AnimatorListener {
+                    override fun onAnimationStart(p0: Animator) {
+
+                    }
+
+                    override fun onAnimationEnd(p0: Animator) {
+                       visibility = View.GONE
+                    }
+
+                    override fun onAnimationCancel(p0: Animator) {
+
+                    }
+
+                    override fun onAnimationRepeat(p0: Animator) {
+
+                    }
+
+                })
+            }
+
+
+
         } else if (gameTimer <= 0) {
             isGameActive = false
             isGameFinished = true
@@ -308,6 +349,7 @@ class ParticleView @JvmOverloads constructor(
         restartButton?.visibility = View.GONE
         nextLevelButton?.visibility = View.GONE
         isVictory = false
+        explosionAnimationView?.visibility = View.GONE
     }
 
     fun restartGame() {
