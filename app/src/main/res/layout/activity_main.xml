@@ -30,6 +30,7 @@
         android:visibility="gone" />
 
 
+    <!--Explosion animation-->
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/explosionAnimationView"
         android:layout_width="200dp"
@@ -37,11 +38,35 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         app:lottie_rawRes="@raw/explosion"
-        app:lottie_autoPlay="false"
-        app:lottie_loop="false"
+        app:lottie_loop="true"
         android:visibility="gone"
         android:layout_marginBottom="2dp"
         />
+
+    <!--Victory animation-->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/victoryAnimationView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        app:lottie_rawRes="@raw/victory"
+        app:lottie_loop="true"
+        android:visibility="gone" />
+
+
+    <!--Loss animation-->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lossAnimationView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:lottie_rawRes="@raw/loss"
+        app:lottie_loop="true"
+        android:visibility="gone"
+        />
+
+
+
 
 
 
