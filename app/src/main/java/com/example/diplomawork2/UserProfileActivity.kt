@@ -1,31 +1,121 @@
 package com.example.diplomawork2
 
+import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import com.example.diplomawork2.databinding.ActivityUserProfileBinding
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 class UserProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityUserProfileBinding
     private lateinit var databaseHelper: DatabaseHelper
 
+    private val REQUEST_IMAGE_CAPTURE = 1
+    private var photoUri: Uri? = null
+    private var currentPhotoPath: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityUserProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val username = intent.getStringExtra("username") ?: ""
+        binding.tvUsername.text = username
+        loadProfilePhoto(username)
+
 
         databaseHelper = DatabaseHelper(this)
 
-        // Получаем username из intent
-        val username = intent.getStringExtra("username") ?: ""
-
-        // Отображаем username
-        binding.tvUsername.text = username
-
-        // Получаем рекорд из базы и отображаем
         val record = databaseHelper.getRecord(username)
         binding.tvRecord.text = "Record: $record"
 
+        updateUI()
 
+        binding.profileImage.setOnClickListener {
+            if (binding.btnChangePhoto.visibility == android.view.View.GONE) {
+                dispatchTakePictureIntent()
+            }
+        }
+
+        binding.btnChangePhoto.setOnClickListener {
+            dispatchTakePictureIntent()
+        }
     }
+
+    private fun updateUI() {
+        val drawable = binding.profileImage.drawable
+        if (drawable == null || drawable.constantState == null) {
+            binding.btnChangePhoto.visibility = android.view.View.GONE
+        } else {
+            binding.btnChangePhoto.visibility = android.view.View.VISIBLE
+        }
+    }
+
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                ex.printStackTrace()
+                null
+            }
+            photoFile?.also {
+                photoUri = FileProvider.getUriForFile(
+                    this,
+                    "${packageName}.fileprovider",
+                    it
+                )
+                currentPhotoPath = it.absolutePath
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri)
+                takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun createImageFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir = getExternalFilesDir("Pictures")
+        return File.createTempFile("JPEG_${timeStamp}_", ".jpg", storageDir)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            currentPhotoPath?.let { path ->
+                binding.profileImage.setImageBitmap(BitmapFactory.decodeFile(path))
+                binding.btnChangePhoto.visibility = View.VISIBLE
+
+                val username = binding.tvUsername.text.toString()
+                val prefs = getSharedPreferences("user_profile", MODE_PRIVATE)
+                prefs.edit().putString("profile_photo_path_$username", path).apply()
+            }
+        }
+    }
+
+
+    private fun loadProfilePhoto(username: String) {
+        val prefs = getSharedPreferences("user_profile", MODE_PRIVATE)
+        val path = prefs.getString("profile_photo_path_$username", null)
+        if (path != null) {
+            val bitmap = BitmapFactory.decodeFile(path)
+            if (bitmap != null) {
+                binding.profileImage.setImageBitmap(bitmap)
+                binding.btnChangePhoto.visibility = View.VISIBLE
+            }
+        }
+    }
+
+
+
 }

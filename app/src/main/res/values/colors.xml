@@ -11,5 +11,6 @@
     <color name="base_color">#008000</color> <!-- Зеленый цвет базы -->
     <color name="drone_color">#0000FF</color> <!-- Синий цвет дронов -->
     <color name="target_color">#FF0000</color> <!-- Красный цвет целей -->
+    <color name="colorAccent">#FF0000</color>
 
 </resources>

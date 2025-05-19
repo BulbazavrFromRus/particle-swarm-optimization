@@ -9,6 +9,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import android.media.MediaPlayer
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -80,6 +84,7 @@ class ParticleView @JvmOverloads constructor(
     }
 
 
+    //Methods for animation
     fun setExplosionAnimationView(view: LottieAnimationView) {
         this.explosionAnimationView = view
     }
@@ -106,6 +111,30 @@ class ParticleView @JvmOverloads constructor(
             visibility = View.GONE
         }
     }
+
+    //Methods for vabration phone
+    private fun vibratePhone() {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else{
+
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(500)
+        }
+    }
+
+    //Method for explosion sound
+    private fun playExplosionSound(){
+        val mediaPlayer = MediaPlayer.create(context, R.raw.explosionsound)
+        mediaPlayer.start()
+        mediaPlayer.setOnCompletionListener {
+            it.release()
+        }
+    }
+
 
 
     fun setCustomBackground(resId: Int) {
@@ -334,6 +363,9 @@ class ParticleView @JvmOverloads constructor(
             isGameFinished = true
             isVictory = true // Победа, если база уничтожена целями
 
+            vibratePhone()
+            playExplosionSound()
+
             //Explosion animation
             explosionAnimationView?.apply {
                 visibility = View.VISIBLE
@@ -361,6 +393,35 @@ class ParticleView @JvmOverloads constructor(
 
                 })
             }
+
+            //Victory animation
+            victoryAnimationView?.apply {
+                visibility = View.VISIBLE
+                setAnimation(R.raw.victory)
+                repeatCount = LottieDrawable.INFINITE
+                speed = 0.5f
+                playAnimation()
+                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                addAnimatorListener(object : Animator.AnimatorListener {
+                    override fun onAnimationStart(p0: Animator) {
+
+                    }
+
+                    override fun onAnimationEnd(p0: Animator) {
+                        visibility = View.GONE
+                    }
+
+                    override fun onAnimationCancel(p0: Animator) {
+
+                    }
+
+                    override fun onAnimationRepeat(p0: Animator) {
+
+                    }
+
+                })
+            }
+
 
 
 
