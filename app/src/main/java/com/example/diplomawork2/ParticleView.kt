@@ -77,6 +77,31 @@ class ParticleView @JvmOverloads constructor(
     private var victoryAnimationShown = false
     private var lossAnimationShown = false
 
+    //Pulse animation
+    private var pulseScale  = 1f
+    private var pulseIncreasing = true
+    private val pulseMinScale = 1f
+    private val pulseMaxScale = 1.3f
+    private val pulseStep = 0.02f
+
+    //Warning before game finish
+    private val warningTimeMillis = 10_000L
+
+
+    private fun updatePulse() {
+        if (gameTimer <= warningTimeMillis) {
+            if (pulseIncreasing) {
+                pulseScale += pulseStep
+                if (pulseScale >= pulseMaxScale) pulseIncreasing = false
+            } else {
+                pulseScale -= pulseStep
+                if (pulseScale <= pulseMinScale) pulseIncreasing = true
+            }
+        } else {
+            pulseScale = 1f
+        }
+    }
+
 
     init {
         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -228,13 +253,26 @@ class ParticleView @JvmOverloads constructor(
 
     private fun drawGameInfo(canvas: Canvas) {
         val levelText = context.getString(R.string.level_text, level)
-        canvas.drawText(levelText, 20f, 30f, textPaint)
+        canvas.drawText(levelText, 20f, 50f, textPaint)
 
         val timerText = String.format(
             context.getString(R.string.time_text),
-            gameTimer
+            gameTimer.toFloat()
         )
-        canvas.drawText(timerText, 20f, 80f, textPaint)
+
+        val x = 20f
+        val y = 100f
+
+        if (gameTimer * 1000 <= warningTimeMillis) { // gameTimer в секундах, warningTimeMillis в миллисекундах
+            textPaint.color = Color.RED
+            canvas.save()
+            canvas.scale(pulseScale, pulseScale, x, y)
+            canvas.drawText(timerText, x, y, textPaint)
+            canvas.restore()
+        } else {
+            textPaint.color = Color.WHITE
+            canvas.drawText(timerText, x, y, textPaint)
+        }
 
         val activity = context as? AppCompatActivity
         val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
@@ -262,6 +300,10 @@ class ParticleView @JvmOverloads constructor(
             updateParticles()
             base.update(targets)
             checkGameOver()
+        }
+        if (gameTimer <= warningTimeMillis && isGameActive) {
+            updatePulse()
+            postInvalidateOnAnimation() // для плавной анимации
         }
     }
 
