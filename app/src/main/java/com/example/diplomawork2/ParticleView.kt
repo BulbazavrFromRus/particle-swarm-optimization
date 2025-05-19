@@ -74,6 +74,9 @@ class ParticleView @JvmOverloads constructor(
     private var explosionAnimationView: LottieAnimationView? = null
     private var victoryAnimationView: LottieAnimationView? = null
     private var lossAnimationView: LottieAnimationView?= null
+    private var victoryAnimationShown = false
+    private var lossAnimationShown = false
+
 
     init {
         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -233,84 +236,24 @@ class ParticleView @JvmOverloads constructor(
         )
         canvas.drawText(timerText, 20f, 80f, textPaint)
 
+        val activity = context as? AppCompatActivity
+        val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
+        val restartButton = activity?.findViewById<Button>(R.id.restart_button)
+
         if (isGameFinished) {
-            val activity = context as? AppCompatActivity
-            val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-            val restartButton = activity?.findViewById<Button>(R.id.restart_button)
             restartButton?.visibility = View.VISIBLE
 
             if (isVictory) {
                 nextLevelButton?.visibility = View.VISIBLE
-
-                //Victory animation
-                victoryAnimationView?.apply {
-                    visibility = View.VISIBLE
-                    setAnimation(R.raw.victory)
-                    repeatCount = LottieDrawable.INFINITE
-                    speed = 0.5f
-                    playAnimation()
-                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                    addAnimatorListener(object : Animator.AnimatorListener {
-                        override fun onAnimationStart(p0: Animator) {
-
-                        }
-
-                        override fun onAnimationEnd(p0: Animator) {
-                            visibility = View.GONE
-                        }
-
-                        override fun onAnimationCancel(p0: Animator) {
-
-                        }
-
-                        override fun onAnimationRepeat(p0: Animator) {
-
-                        }
-
-                    })
-                }
-
-                //in case of loss i'll write code later
             } else {
-                //Victory animation
-                lossAnimationView?.apply {
-                    visibility = View.VISIBLE
-                    setAnimation(R.raw.loss)
-                    repeatCount =  LottieDrawable.INFINITE
-                    speed = 0.5f
-                    playAnimation()
-                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                    addAnimatorListener(object : Animator.AnimatorListener {
-                        override fun onAnimationStart(p0: Animator) {
-
-                        }
-
-                        override fun onAnimationEnd(p0: Animator) {
-                            visibility = View.GONE
-                        }
-
-                        override fun onAnimationCancel(p0: Animator) {
-
-                        }
-
-                        override fun onAnimationRepeat(p0: Animator) {
-
-                        }
-
-                    })
-                }
+                nextLevelButton?.visibility = View.GONE
             }
         } else {
-
-            val activity = context as? AppCompatActivity
-            val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-            val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-
-            //While game isn't done we keep our button in invisibly condition View.GONEE
             restartButton?.visibility = View.GONE
             nextLevelButton?.visibility = View.GONE
         }
     }
+
 
     private fun updateGame() {
         if (isGameActive) {
@@ -358,14 +301,14 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun checkGameOver() {
+
         if (base.health <= 0) {
             isGameActive = false
             isGameFinished = true
-            isVictory = true // Победа, если база уничтожена целями
+            isVictory = true
 
             vibratePhone()
             playExplosionSound()
-
             //Explosion animation
             explosionAnimationView?.apply {
                 visibility = View.VISIBLE
@@ -374,61 +317,56 @@ class ParticleView @JvmOverloads constructor(
                 speed = 0.5f
                 playAnimation()
                 setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                removeAllAnimatorListeners()
                 addAnimatorListener(object : Animator.AnimatorListener {
-                    override fun onAnimationStart(p0: Animator) {
-
-                    }
-
-                    override fun onAnimationEnd(p0: Animator) {
-                       visibility = View.GONE
-                    }
-
-                    override fun onAnimationCancel(p0: Animator) {
-
-                    }
-
-                    override fun onAnimationRepeat(p0: Animator) {
-
-                    }
-
+                    override fun onAnimationStart(p0: Animator) {}
+                    override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
+                    override fun onAnimationCancel(p0: Animator) {}
+                    override fun onAnimationRepeat(p0: Animator) {}
                 })
             }
 
-            //Victory animation
-            victoryAnimationView?.apply {
+            // Victory animation - только если ещё не была показана!
+            if (!victoryAnimationShown) {
+                victoryAnimationShown = true
+                victoryAnimationView?.apply {
+                    visibility = View.VISIBLE
+                    setAnimation(R.raw.victory)
+                    repeatCount = LottieDrawable.INFINITE
+                    speed = 0.5f
+                    playAnimation()
+                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                    removeAllAnimatorListeners()
+                    addAnimatorListener(object : Animator.AnimatorListener {
+                        override fun onAnimationStart(p0: Animator) {}
+                        override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
+                        override fun onAnimationCancel(p0: Animator) {}
+                        override fun onAnimationRepeat(p0: Animator) {}
+                    })
+                }
+            }
+        }
+        else if (gameTimer <= 0) {
+            isGameActive = false
+            isGameFinished = true
+            isVictory = false // Поражение, если время истекло
+
+            lossAnimationShown = true
+            lossAnimationView?.apply {
                 visibility = View.VISIBLE
-                setAnimation(R.raw.victory)
+                setAnimation(R.raw.loss)
                 repeatCount = LottieDrawable.INFINITE
                 speed = 0.5f
                 playAnimation()
                 setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                removeAllAnimatorListeners()
                 addAnimatorListener(object : Animator.AnimatorListener {
-                    override fun onAnimationStart(p0: Animator) {
-
-                    }
-
-                    override fun onAnimationEnd(p0: Animator) {
-                        visibility = View.GONE
-                    }
-
-                    override fun onAnimationCancel(p0: Animator) {
-
-                    }
-
-                    override fun onAnimationRepeat(p0: Animator) {
-
-                    }
-
+                    override fun onAnimationStart(p0: Animator) {}
+                    override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
+                    override fun onAnimationCancel(p0: Animator) {}
+                    override fun onAnimationRepeat(p0: Animator) {}
                 })
             }
-
-
-
-
-        } else if (gameTimer <= 0) {
-            isGameActive = false
-            isGameFinished = true
-            isVictory = false // Поражение, если время истекло
         }
     }
 
@@ -488,6 +426,7 @@ class ParticleView @JvmOverloads constructor(
         nextLevelButton?.visibility = View.GONE
         isVictory = false
         explosionAnimationView?.visibility = View.GONE
+        victoryAnimationShown = false
     }
 
     fun restartGame() {
@@ -523,6 +462,7 @@ class ParticleView @JvmOverloads constructor(
         isGameActive = true
         isGameFinished = false
         isVictory = false
+        victoryAnimationShown = false
     }
 
 
