@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Diploma Work 2</string>
-    <string name="level_text">Уровень: %d</string>
-    <string name="time_text">Время: %.1f</string>
-    <string name="win_text">Поздравляем! Вы победили!</string>
-    <string name="lose_text">К сожалению, вы проиграли.</string>
+    <string name="level_text">Level: %d</string>
+    <string name="time_text">Time: %.1f</string>
+    <!--<string name="win_text">Поздравляем! Вы победили!</string>
+    <string name="lose_text">К сожалению, вы проиграли.</string>-->
 </resources>
