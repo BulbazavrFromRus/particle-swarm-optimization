@@ -30,7 +30,7 @@ class ParticleView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private val particles = mutableListOf<Particle>()
-    private val targets = mutableListOf<Target>()
+    val targets = mutableListOf<Target>()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val textPaint = Paint().apply {
@@ -40,7 +40,7 @@ class ParticleView @JvmOverloads constructor(
 
 
     private val baseRadius = 50f
-    private val base = Base(
+    var base = Base(
         PointF(0f, 0f),
         baseRadius,
         1000
@@ -53,42 +53,46 @@ class ParticleView @JvmOverloads constructor(
     private val minDistance = 50f
     private val maxSpeed = 5f
     private val droneCount = 10
-    private var gameDuration = 30f
+    var gameDuration = 30f
 
-    private var gameTimer = 0f
-    private var isGameActive = false
-    private var isGameFinished = false
-    private var level = 1
-    private var isVictory = false
+    var gameTimer = 0f
+    var isGameActive = false
+    var isGameFinished = false
+    var level = 1
+    var isVictory = false
 
 
     private var backgroundResource = 0
     private var scaledBitmap: Bitmap? = null
 
 
-    private var username: String? = null
-    private var databaseHelper: DatabaseHelper
+    var username: String? = null
+    var databaseHelper: DatabaseHelper
 
 
     //Animation variables
-    private var explosionAnimationView: LottieAnimationView? = null
+    var explosionAnimationView: LottieAnimationView? = null
     private var victoryAnimationView: LottieAnimationView? = null
     private var lossAnimationView: LottieAnimationView?= null
-    private var victoryAnimationShown = false
+    var victoryAnimationShown = false
     private var lossAnimationShown = false
 
     //Pulse animation
-    private var pulseScale  = 1f
-    private var pulseIncreasing = true
-    private val pulseMinScale = 1f
-    private val pulseMaxScale = 1.3f
-    private val pulseStep = 0.02f
+    var pulseScale  = 1f
+    var pulseIncreasing = true
+    var pulseMinScale = 1f
+    var pulseMaxScale = 1.3f
+    var pulseStep = 0.02f
 
     //Warning before game finish
-    private val warningTimeMillis = 10_000L
+    var warningTimeMillis = 10_000L
+
+    //For bullets
+    private val bullets = mutableListOf<Bullet>()
 
 
-    private fun updatePulse() {
+
+    public fun updatePulse() {
         if (gameTimer <= warningTimeMillis) {
             if (pulseIncreasing) {
                 pulseScale += pulseStep
@@ -113,6 +117,7 @@ class ParticleView @JvmOverloads constructor(
 
 
     //Methods for animation
+    @JvmName("setExplosionAnimationViewExplicit")
     fun setExplosionAnimationView(view: LottieAnimationView) {
         this.explosionAnimationView = view
     }
