@@ -31,14 +31,6 @@
             android:name=".SplashScreen"
             android:exported="false">
 
-            <!-- When app is switch on the first screen is SplashScreen using this code below -->
-            <!--
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            -->
         </activity>
         <activity
             android:name=".MainActivity"

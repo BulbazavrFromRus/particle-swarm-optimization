@@ -5,9 +5,6 @@
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="pulseResetsWhenTimeAboveWarningThreshold()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="testStopGameLoss()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
