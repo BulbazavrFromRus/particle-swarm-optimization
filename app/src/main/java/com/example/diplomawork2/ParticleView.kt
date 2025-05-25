@@ -1,14 +1,8 @@
 package com.example.diplomawork2
 
 import android.animation.Animator
-import android.animation.Animator.AnimatorListener
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
+import android.graphics.*
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.VibrationEffect
@@ -16,8 +10,8 @@ import android.os.Vibrator
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.airbnb.lottie.LottieAnimationView
 import com.airbnb.lottie.LottieDrawable
@@ -29,8 +23,6 @@ class ParticleView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
-    private val particles = mutableListOf<Particle>()
-    val targets = mutableListOf<Target>()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val targetPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val textPaint = Paint().apply {
@@ -38,85 +30,41 @@ class ParticleView @JvmOverloads constructor(
         textSize = 50f
     }
 
+    var base = Base(PointF(0f, 0f), 50f, 1000)
 
-    private val baseRadius = 50f
-    var base = Base(
-        PointF(0f, 0f),
-        baseRadius,
-        1000
-    )
-
-    private val targetRadius = 30f
-    private val cohesionWeight = 0.005f
-    private val separationWeight = 0.1f
-    private val alignmentW = 0.05f
-    private val minDistance = 50f
-    private val maxSpeed = 5f
-    private val droneCount = 10
-    var gameDuration = 30f
-
-    var gameTimer = 0f
-    var isGameActive = false
-    var isGameFinished = false
-    var level = 1
-    var isVictory = false
-
-
-    private var backgroundResource = 0
-    private var scaledBitmap: Bitmap? = null
-
+    private val pulseAnimation = PulseAnimation(warningTimeSeconds = 10f)
+    private val gameState = GameState(gameDuration = 30.000f)
+    private val particleManager = ParticleManager()
+    private val targetManager = TargetManager(base)
 
     var username: String? = null
     var databaseHelper: DatabaseHelper
 
-
-    //Animation variables
     var explosionAnimationView: LottieAnimationView? = null
     private var victoryAnimationView: LottieAnimationView? = null
     private var lossAnimationView: LottieAnimationView?= null
-    var victoryAnimationShown = false
-    private var lossAnimationShown = false
 
-    //Pulse animation
     var pulseScale  = 1f
     var pulseIncreasing = true
-    var pulseMinScale = 1f
-    var pulseMaxScale = 1.3f
-    var pulseStep = 0.02f
 
-    //Warning before game finish
-    var warningTimeMillis = 10_000L
+    private var backgroundResource = 0
+    private var scaledBitmap: Bitmap? = null
 
-    //For bullets
-    private val bullets = mutableListOf<Bullet>()
-
-
-
-    public fun updatePulse() {
-        if (gameTimer <= warningTimeMillis) {
-            if (pulseIncreasing) {
-                pulseScale += pulseStep
-                if (pulseScale >= pulseMaxScale) pulseIncreasing = false
-            } else {
-                pulseScale -= pulseStep
-                if (pulseScale <= pulseMinScale) pulseIncreasing = true
-            }
-        } else {
-            pulseScale = 1f
-        }
-    }
-
+    //GameEngine
+    private val gameEngine = GameEngine(gameState, particleManager, targetManager, base)
 
     init {
         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         username = sharedPref.getString("username", null)
         databaseHelper = DatabaseHelper(context)
         setWillNotDraw(false)
-        generateParticles()
+        // Генерируем частицы согласно уровню и размеру
+        if (width > 0 && height > 0) {
+            particleManager.generateParticles(gameState.level * 10, width, height, context)
+        }
     }
 
-
-    //Methods for animation
+    // --- Animation view setters ---
     @JvmName("setExplosionAnimationViewExplicit")
     fun setExplosionAnimationView(view: LottieAnimationView) {
         this.explosionAnimationView = view
@@ -145,70 +93,37 @@ class ParticleView @JvmOverloads constructor(
         }
     }
 
-    //Methods for vabration phone
-    private fun vibratePhone() {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-        } else{
-
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(500)
-        }
-    }
-
-    //Method for explosion sound
-    private fun playExplosionSound(){
-        val mediaPlayer = MediaPlayer.create(context, R.raw.explosionsound)
-        mediaPlayer.start()
-        mediaPlayer.setOnCompletionListener {
-            it.release()
-        }
-    }
-
-
-
+    // --- Background ---
     fun setCustomBackground(resId: Int) {
         backgroundResource = resId
         if (width > 0 && height > 0) {
             val backgroundBitmap = BitmapFactory.decodeResource(resources, backgroundResource)
-            if (backgroundBitmap != null) {
-                scaledBitmap = Bitmap.createScaledBitmap(backgroundBitmap, width, height, true)
-            } else {
-                // Фон не найден, можно задать фон по умолчанию или оставить scaledBitmap = null
-                scaledBitmap = null
+            scaledBitmap = backgroundBitmap?.let {
+                Bitmap.createScaledBitmap(it, width, height, true)
             }
             invalidate()
         }
     }
 
-
-
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        // Now it's safe to call setBackground
-
         setCustomBackground(backgroundResource)
         base.position.x = w / 2f - base.radius
         base.position.y = h - base.radius * 2
-        generateParticles()
+        particleManager.generateParticles(gameState.level * 10, w, h, context)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        scaledBitmap?.let {
-            canvas.drawBitmap(it, 0f, 0f, null)
-        }
+        scaledBitmap?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
         drawBase(canvas)
         drawDrones(canvas)
         drawTargets(canvas)
         drawGameInfo(canvas)
 
-        if (!isGameFinished) {
+        if (!gameState.isGameFinished) {
             updateGame()
             postInvalidateDelayed(16)
         }
@@ -222,12 +137,8 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun drawDrones(canvas: Canvas) {
-        particles.forEach { drone ->
-            if (drone.bullets <= 0) {
-                paint.color = Color.RED // Красный цвет для уничтоженных дронов
-            } else {
-                paint.color = ContextCompat.getColor(context, R.color.drone_color)
-            }
+        particleManager.particles.forEach { drone ->
+            paint.color = if (drone.bullets <= 0) Color.RED else ContextCompat.getColor(context, R.color.drone_color)
             canvas.drawCircle(drone.position.x, drone.position.y, drone.radius, paint)
             paint.color = Color.WHITE
             canvas.drawRect(
@@ -241,34 +152,34 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun drawTargets(canvas: Canvas) {
-        targets.forEach { target ->
+        targetManager.targets.forEach { target ->
             targetPaint.color = Color.argb(
                 255,
                 255,
                 (255 * (target.health.toFloat() / 100)).toInt(),
                 0
             )
-            canvas.drawCircle(target.x, target.y, targetRadius, targetPaint)
+            canvas.drawCircle(target.x, target.y, 30f, targetPaint)
             if (target.isBeingDragged) {
                 targetPaint.color = Color.CYAN
-                canvas.drawCircle(target.x, target.y, targetRadius + 5f, targetPaint)
+                canvas.drawCircle(target.x, target.y, 35f, targetPaint)
             }
         }
     }
 
     private fun drawGameInfo(canvas: Canvas) {
-        val levelText = context.getString(R.string.level_text, level)
+        val levelText = context.getString(R.string.level_text, gameState.level)
         canvas.drawText(levelText, 20f, 50f, textPaint)
 
         val timerText = String.format(
             context.getString(R.string.time_text),
-            gameTimer.toFloat()
+            gameState.gameTimer
         )
 
         val x = 20f
         val y = 100f
 
-        if (gameTimer * 1000 <= warningTimeMillis) { // gameTimer в секундах, warningTimeMillis в миллисекундах
+        if (gameState.gameTimer <= pulseAnimation.warningTimeSeconds) {
             textPaint.color = Color.RED
             canvas.save()
             canvas.scale(pulseScale, pulseScale, x, y)
@@ -283,10 +194,9 @@ class ParticleView @JvmOverloads constructor(
         val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
         val restartButton = activity?.findViewById<Button>(R.id.restart_button)
 
-        if (isGameFinished) {
+        if (gameState.isGameFinished) {
             restartButton?.visibility = View.VISIBLE
-
-            if (isVictory) {
+            if (gameState.isVictory) {
                 nextLevelButton?.visibility = View.VISIBLE
             } else {
                 nextLevelButton?.visibility = View.GONE
@@ -297,119 +207,116 @@ class ParticleView @JvmOverloads constructor(
         }
     }
 
-
     private fun updateGame() {
-        if (isGameActive) {
-            gameTimer -= 0.016f
-            updateTargets()
-            updateParticles()
-            base.update(targets)
+       /* if (gameState.isGameActive) {
+            gameState.gameTimer -= 0.016f
+            targetManager.updateTargets()
+            particleManager.updateParticles(targetManager.targets, width.toFloat(), height.toFloat())
+            base.update(targetManager.targets)
             checkGameOver()
         }
-        if (gameTimer <= warningTimeMillis && isGameActive) {
-            updatePulse()
-            postInvalidateOnAnimation() // для плавной анимации
-        }
-    }
+        if (gameState.gameTimer <= pulseAnimation.warningTimeSeconds && gameState.isGameActive) {
+            pulseAnimation.update(gameState.gameTimer)
+            pulseScale = pulseAnimation.pulseScale
+            pulseIncreasing = pulseAnimation.pulseIncreasing
+            postInvalidateOnAnimation()
+        }*/
 
-    private fun updateTargets() {
-        targets.forEach { target ->
-            val dx = base.position.x + base.radius - target.x
-            val dy = base.position.y + base.radius - target.y
-            val distance = sqrt(dx * dx + dy * dy)
+        // Делегируем обновление игрового состояния в GameEngine
+        gameEngine.updateGame(width.toFloat(), height.toFloat())
+        checkGameOver()
 
-            if (distance > 0) {
-                target.x += dx / distance * target.speed
-                target.y += dy / distance * target.speed
-            }
-
-            if (distance < base.radius) {
-                base.health -= 10
-                target.health = 0
-            }
-        }
-        targets.removeAll { it.health <= 0 }
-    }
-
-    private fun updateParticles() {
-        particles.forEach { drone ->
-            drone.update(
-                particles = particles,
-                targets = targets,
-                screenWidth = width.toFloat(),
-                screenHeight = height.toFloat(),
-                cohesionW = cohesionWeight,
-                separationW = separationWeight,
-                alignmentW = alignmentW,
-                minDist = minDistance,
-                maxSpeed = maxSpeed
-            )
+        // Обновляем пульсацию, если осталось меньше warningTimeSeconds и игра активна
+        if (gameState.gameTimer <= pulseAnimation.warningTimeSeconds && gameState.isGameActive) {
+            pulseAnimation.update(gameState.gameTimer)
+            pulseScale = pulseAnimation.pulseScale
+            pulseIncreasing = pulseAnimation.pulseIncreasing
+            postInvalidateOnAnimation() // Запрос перерисовки для анимации
         }
     }
 
     private fun checkGameOver() {
-
         if (base.health <= 0) {
-            isGameActive = false
-            isGameFinished = true
-            isVictory = true
-
+            gameState.stopGame(victory = true)
             vibratePhone()
             playExplosionSound()
-            //Explosion animation
-            explosionAnimationView?.apply {
-                visibility = View.VISIBLE
-                setAnimation(R.raw.explosion)
+            showExplosionAnimation()
+            showVictoryAnimation()
+        } else if (gameState.gameTimer <= 0) {
+            gameState.stopGame(victory = false)
+            showLossAnimation()
+        }
+    }
+
+    private fun vibratePhone() {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(500)
+        }
+    }
+
+    private fun playExplosionSound() {
+        val mediaPlayer = MediaPlayer.create(context, R.raw.explosionsound)
+        mediaPlayer.start()
+        mediaPlayer.setOnCompletionListener { it.release() }
+    }
+
+    private fun showExplosionAnimation() {
+        explosionAnimationView?.apply {
+            visibility = VISIBLE
+            setAnimation(R.raw.explosion)
+            repeatCount = LottieDrawable.INFINITE
+            speed = 0.5f
+            playAnimation()
+            setLayerType(LAYER_TYPE_SOFTWARE, null)
+            removeAllAnimatorListeners()
+            addAnimatorListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(p0: Animator) {}
+                override fun onAnimationEnd(p0: Animator) { visibility = GONE }
+                override fun onAnimationCancel(p0: Animator) {}
+                override fun onAnimationRepeat(p0: Animator) {}
+            })
+        }
+    }
+
+    private fun showVictoryAnimation() {
+        if (!gameState.victoryAnimationShown) {
+            gameState.victoryAnimationShown = true
+            victoryAnimationView?.apply {
+                visibility = VISIBLE
+                setAnimation(R.raw.victory)
                 repeatCount = LottieDrawable.INFINITE
                 speed = 0.5f
                 playAnimation()
-                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                setLayerType(LAYER_TYPE_SOFTWARE, null)
                 removeAllAnimatorListeners()
                 addAnimatorListener(object : Animator.AnimatorListener {
                     override fun onAnimationStart(p0: Animator) {}
-                    override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
+                    override fun onAnimationEnd(p0: Animator) { visibility = GONE }
                     override fun onAnimationCancel(p0: Animator) {}
                     override fun onAnimationRepeat(p0: Animator) {}
                 })
             }
-
-            // Victory animation - только если ещё не была показана!
-            if (!victoryAnimationShown) {
-                victoryAnimationShown = true
-                victoryAnimationView?.apply {
-                    visibility = View.VISIBLE
-                    setAnimation(R.raw.victory)
-                    repeatCount = LottieDrawable.INFINITE
-                    speed = 0.5f
-                    playAnimation()
-                    setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-                    removeAllAnimatorListeners()
-                    addAnimatorListener(object : Animator.AnimatorListener {
-                        override fun onAnimationStart(p0: Animator) {}
-                        override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
-                        override fun onAnimationCancel(p0: Animator) {}
-                        override fun onAnimationRepeat(p0: Animator) {}
-                    })
-                }
-            }
         }
-        else if (gameTimer <= 0) {
-            isGameActive = false
-            isGameFinished = true
-            isVictory = false // Поражение, если время истекло
+    }
 
-            lossAnimationShown = true
+    private fun showLossAnimation() {
+        if (!gameState.lossAnimationShown) {
+            gameState.lossAnimationShown = true
             lossAnimationView?.apply {
-                visibility = View.VISIBLE
+                visibility = VISIBLE
                 setAnimation(R.raw.loss)
                 repeatCount = LottieDrawable.INFINITE
                 speed = 0.5f
                 playAnimation()
-                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                setLayerType(LAYER_TYPE_SOFTWARE, null)
                 removeAllAnimatorListeners()
                 addAnimatorListener(object : Animator.AnimatorListener {
                     override fun onAnimationStart(p0: Animator) {}
-                    override fun onAnimationEnd(p0: Animator) { visibility = View.GONE }
+                    override fun onAnimationEnd(p0: Animator) { visibility = GONE }
                     override fun onAnimationCancel(p0: Animator) {}
                     override fun onAnimationRepeat(p0: Animator) {}
                 })
@@ -418,32 +325,29 @@ class ParticleView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (isGameFinished) return true
+        if (gameState.isGameFinished) return true
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                if (!isGameActive) {
+                if (!gameState.isGameActive) {
                     startNewGame()
                 }
 
-                val target = targets.find {
-                    sqrt(
-                        (event.x - it.x).pow(2) +
-                                (event.y - it.y).pow(2)
-                    ) < targetRadius * 2
+                val target = targetManager.targets.find {
+                    sqrt((event.x - it.x).pow(2) + (event.y - it.y).pow(2)) < 30f * 2
                 }
 
                 if (target != null) {
                     target.isBeingDragged = true
-                    targets.remove(target)
-                    targets.add(target)
+                    targetManager.targets.remove(target)
+                    targetManager.targets.add(target)
                 } else {
-                    targets.add(Target(event.x, event.y))
+                    targetManager.targets.add(Target(event.x, event.y))
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
-                targets.find { it.isBeingDragged }?.let {
+                targetManager.targets.find { it.isBeingDragged }?.let {
                     it.x = event.x
                     it.y = event.y
                     invalidate()
@@ -451,7 +355,7 @@ class ParticleView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_UP -> {
-                targets.find { it.isBeingDragged }?.let {
+                targetManager.targets.find { it.isBeingDragged }?.let {
                     it.isBeingDragged = false
                 }
             }
@@ -459,78 +363,43 @@ class ParticleView @JvmOverloads constructor(
         return true
     }
 
-    private fun startNewGame() {
-        isGameActive = true
-        isGameFinished = false
-        gameTimer = gameDuration
+    fun startNewGame() {
+        gameState.startNewGame()
         base.health = 1000
-        generateParticles()
-        targets.clear()
+        particleManager.generateParticles(gameState.level * 10, width, height, context)
+        targetManager.targets.clear()
         val activity = context as? AppCompatActivity
-        val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-        val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-        restartButton?.visibility = View.GONE
-        nextLevelButton?.visibility = View.GONE
-        isVictory = false
-        explosionAnimationView?.visibility = View.GONE
-        victoryAnimationShown = false
+        activity?.findViewById<Button>(R.id.next_level_button)?.visibility = GONE
+        activity?.findViewById<Button>(R.id.restart_button)?.visibility = GONE
+        gameState.isVictory = false
+        explosionAnimationView?.visibility = GONE
+        invalidate()
     }
 
     fun restartGame() {
         startNewGame()
-        level = 1
+        gameState.level = 1
         invalidate()
     }
 
     fun nextLevel() {
-        level++
-
+        gameState.nextLevel()
         username?.let { user ->
             val currentRecord = databaseHelper.getRecord(user)
-            if (level > currentRecord) {
-                databaseHelper.updateRecord(user, level)
+            if (gameState.level > currentRecord) {
+                databaseHelper.updateRecord(user, gameState.level)
             }
-
             explosionAnimationView?.apply {
                 cancelAnimation()
-                visibility = View.GONE
+                visibility = GONE
             }
         }
-
-        gameTimer = gameDuration
         base.health = 1000
-        generateParticles()
-        targets.clear()
+        particleManager.generateParticles(gameState.level * 10, width, height, context)
+        targetManager.targets.clear()
         val activity = context as? AppCompatActivity
-        val nextLevelButton = activity?.findViewById<Button>(R.id.next_level_button)
-        val restartButton = activity?.findViewById<Button>(R.id.restart_button)
-        restartButton?.visibility = View.GONE
-        nextLevelButton?.visibility = View.GONE
-        isGameActive = true
-        isGameFinished = false
-        isVictory = false
-        victoryAnimationShown = false
+        activity?.findViewById<Button>(R.id.next_level_button)?.visibility = GONE
+        activity?.findViewById<Button>(R.id.restart_button)?.visibility = GONE
+        invalidate()
     }
-
-
-    private fun generateParticles() {
-        if (width > 0 && height > 0) {
-            particles.clear()
-            val droneCount = level * 10
-            repeat(droneCount) {
-                particles.add(
-                    Particle(
-                        x = Random.nextFloat() * width,
-                        y = Random.nextFloat() * height,
-                        speedX = Random.nextFloat() * 2 - 1,
-                        speedY = Random.nextFloat() * 2 - 1,
-                        radius = 15f,
-                        color = ContextCompat.getColor(context, R.color.drone_color),
-                        bullets = 2000
-                    )
-                )
-            }
-        }
-    }
-
 }

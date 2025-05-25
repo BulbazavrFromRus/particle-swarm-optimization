@@ -1,32 +1,31 @@
 package com.example.diplomawork2
-import androidx.test.platform.app.InstrumentationRegistry
-import org.junit.Assert.*
+
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import org.junit.Test
-
-
 
 class PulseAnimationTest {
 
+    @Test
+    fun pulseIncreasesAndDecreasesBetweenMinAndMaxScale() {
+        val pulse = PulseAnimation(warningTimeSeconds = 10f)
+        pulse.pulseScale = 1f
+        pulse.pulseIncreasing = true
+
+        pulse.update(5f) // время меньше warningTimeSeconds
+        assertTrue(pulse.pulseScale > 1f)
+
+        pulse.pulseScale = 1.3f
+        pulse.pulseIncreasing = true
+        pulse.update(5f)
+        assertTrue(!pulse.pulseIncreasing) // переключение направления
+    }
 
     @Test
-    fun testPulseActivatesWhenTimerBelowWarning(){
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val particleView = ParticleView(context)
-
-        // Устанавливаем параметры для теста
-        particleView.warningTimeMillis = 10_000L
-        particleView.gameTimer = 9_000f // 9 секунд - меньше warningTimeMillis
-        particleView.pulseScale = 1f
-        particleView.pulseIncreasing = true
-        particleView.pulseStep = 0.02f
-        particleView.pulseMinScale = 1f
-        particleView.pulseMaxScale = 1.3f
-
-        // Вызываем метод обновления пульсации
-        particleView.updatePulse()
-
-        // Проверяем, что пульсация активна — pulseScale увеличилось
-        assertTrue("Pulse scale should increase when timer below warning",
-            particleView.pulseScale > 1f)
+    fun pulseResetsWhenTimeAboveWarningThreshold() {
+        val pulse = PulseAnimation(warningTimeSeconds = 10f)
+        pulse.pulseScale = 1.2f
+        pulse.update(20f) // время больше warningTimeSeconds
+        assertEquals(1f, pulse.pulseScale)
     }
 }
