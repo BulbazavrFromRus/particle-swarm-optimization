@@ -9,7 +9,7 @@ class DatabaseHelper(private val context: Context): SQLiteOpenHelper(context, DA
 
     companion object {
         private const val DATABASE_NAME = "UserDatabase.db"
-        private const val DATABASE_VERSION = 2  // увеличили версию до 2
+        private const val DATABASE_VERSION = 2
         private const val TABLE_NAME = "data"
         private const val COLUMN_ID = "id"
         private const val COLUMN_USERNAME = "username"
@@ -22,7 +22,7 @@ class DatabaseHelper(private val context: Context): SQLiteOpenHelper(context, DA
                 "$COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 "$COLUMN_USERNAME TEXT, " +
                 "$COLUMN_PASSWORD TEXT, " +
-                "$COLUMN_RECORD INTEGER DEFAULT 0);")  // добавили колонку record
+                "$COLUMN_RECORD INTEGER DEFAULT 0);")
         db?.execSQL(createTableQuery)
     }
 

@@ -93,6 +93,7 @@ data class Particle(
                 (cohesion.x * invNeighbors - position.x) * cohesionW,
                 (cohesion.y * invNeighbors - position.y) * cohesionW
             )
+
             separation.set(separation.x * separationW, separation.y * separationW)
             alignment.set(
                 (alignment.x * invNeighbors - velocity.x) * alignmentW,
