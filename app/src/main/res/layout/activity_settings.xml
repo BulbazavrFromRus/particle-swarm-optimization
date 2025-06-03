@@ -16,7 +16,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="40dp"
         android:fontFamily="@font/inter_bold"
-        android:text="Items"
+        android:text="Choose map"
         android:textColor="#fdfdfd"
         android:textSize="25sp"
         android:textStyle="bold" />

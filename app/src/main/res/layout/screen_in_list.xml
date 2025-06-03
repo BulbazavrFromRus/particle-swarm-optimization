@@ -24,7 +24,7 @@
         android:paddingVertical="10dp"
         android:textStyle="bold"
         android:textSize="30sp"
-        android:text="TextView" />
+        android:text="" />
 
     <TextView
         android:id="@+id/item_list_desc"
@@ -32,7 +32,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingVertical="10dp"
-        android:text="TextView" />
+        android:text="" />
 
     <TextView
         android:id="@+id/item_list_price"
@@ -42,7 +42,7 @@
         android:paddingVertical="10dp"
         android:gravity="end"
         android:textStyle="bold"
-        android:text="TextView" />
+        android:text="" />
 
     <Button
         android:id="@+id/item_list_button"

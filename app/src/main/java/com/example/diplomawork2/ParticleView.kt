@@ -208,19 +208,6 @@ class ParticleView @JvmOverloads constructor(
     }
 
     private fun updateGame() {
-       /* if (gameState.isGameActive) {
-            gameState.gameTimer -= 0.016f
-            targetManager.updateTargets()
-            particleManager.updateParticles(targetManager.targets, width.toFloat(), height.toFloat())
-            base.update(targetManager.targets)
-            checkGameOver()
-        }
-        if (gameState.gameTimer <= pulseAnimation.warningTimeSeconds && gameState.isGameActive) {
-            pulseAnimation.update(gameState.gameTimer)
-            pulseScale = pulseAnimation.pulseScale
-            pulseIncreasing = pulseAnimation.pulseIncreasing
-            postInvalidateOnAnimation()
-        }*/
 
         // Делегируем обновление игрового состояния в GameEngine
         gameEngine.updateGame(width.toFloat(), height.toFloat())
