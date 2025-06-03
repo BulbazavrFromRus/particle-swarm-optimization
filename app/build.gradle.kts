@@ -57,6 +57,8 @@ dependencies {
     implementation("com.airbnb.android:lottie:5.2.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation(libs.androidx.monitor)
+    implementation ("androidx.exifinterface:exifinterface:1.3.6")
+
 
     // Юнит-тесты
     testImplementation(libs.junit)

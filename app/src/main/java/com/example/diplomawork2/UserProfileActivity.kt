@@ -1,7 +1,10 @@
 package com.example.diplomawork2
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -31,7 +34,6 @@ class UserProfileActivity : AppCompatActivity() {
         binding.tvUsername.text = username
         loadProfilePhoto(username)
 
-
         databaseHelper = DatabaseHelper(this)
 
         val record = databaseHelper.getRecord(username)
@@ -40,7 +42,7 @@ class UserProfileActivity : AppCompatActivity() {
         updateUI()
 
         binding.profileImage.setOnClickListener {
-            if (binding.btnChangePhoto.visibility == android.view.View.GONE) {
+            if (binding.btnChangePhoto.visibility == View.GONE) {
                 dispatchTakePictureIntent()
             }
         }
@@ -53,9 +55,9 @@ class UserProfileActivity : AppCompatActivity() {
     private fun updateUI() {
         val drawable = binding.profileImage.drawable
         if (drawable == null || drawable.constantState == null) {
-            binding.btnChangePhoto.visibility = android.view.View.GONE
+            binding.btnChangePhoto.visibility = View.GONE
         } else {
-            binding.btnChangePhoto.visibility = android.view.View.VISIBLE
+            binding.btnChangePhoto.visibility = View.VISIBLE
         }
     }
 
@@ -93,7 +95,9 @@ class UserProfileActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             currentPhotoPath?.let { path ->
-                binding.profileImage.setImageBitmap(BitmapFactory.decodeFile(path))
+                val bitmap = BitmapFactory.decodeFile(path)
+                val rotatedBitmap = rotateBitmapIfRequired(path, bitmap)
+                binding.profileImage.setImageBitmap(rotatedBitmap)
                 binding.btnChangePhoto.visibility = View.VISIBLE
 
                 val username = binding.tvUsername.text.toString()
@@ -103,19 +107,40 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 
-
     private fun loadProfilePhoto(username: String) {
         val prefs = getSharedPreferences("user_profile", MODE_PRIVATE)
         val path = prefs.getString("profile_photo_path_$username", null)
         if (path != null) {
             val bitmap = BitmapFactory.decodeFile(path)
             if (bitmap != null) {
-                binding.profileImage.setImageBitmap(bitmap)
+                val rotatedBitmap = rotateBitmapIfRequired(path, bitmap)
+                binding.profileImage.setImageBitmap(rotatedBitmap)
                 binding.btnChangePhoto.visibility = View.VISIBLE
             }
         }
     }
 
+    // Для поворота фото по EXIF
+    private fun rotateBitmapIfRequired(path: String, bitmap: Bitmap): Bitmap {
+        val exif = ExifInterface(path)
+        return when (exif.getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_NORMAL
+        )) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+            else -> bitmap
+        }
+    }
 
-
+    private fun rotateBitmap(source: Bitmap, angle: Float): Bitmap {
+        val matrix = Matrix()
+        matrix.postRotate(angle)
+        return Bitmap.createBitmap(
+            source, 0, 0,
+            source.width, source.height,
+            matrix, true
+        )
+    }
 }
